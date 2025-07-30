@@ -437,7 +437,6 @@ var eventcontrol = {
 		return ans;
 	}
 };
-// 特效管理
 // 右侧设置面板管理
 // ============================================================================================
 var sidebarcontrol = {
@@ -1105,7 +1104,14 @@ $("eventlayer-del").addEventListener("click", () => { // 删除事件层级
 })
 $("m-addline").addEventListener('click', () => {
 	all_data.judgeLineList.push(new_judge_line());
-	window.alert("添加成功");
+	Swal.fire({
+		toast: true,
+		position: 'top-end',
+		icon: 'success',
+		title: '添加成功',
+		showConfirmButton: false,
+		timer: 3000
+	});
 });
 $("m-event").addEventListener('click', () => {
 	if (edit_event == 1) {

@@ -11,6 +11,7 @@
 	<!-- SweetAlert2 -->
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
+
 <body>
 	<div id="mainUI">
 		<audio id="music-player"></audio>
@@ -220,10 +221,14 @@
 			<!-- 事件层级选择 -->
 			<div style="display:flex">
 				<div id="eventlayer-ex" class="eventlayer-btn">ex</div>
-				<!-- 动态扩展的容器 -->
-				<div id="eventlayer-con" style="display:flex"></div>
 				<div id="eventlayer-add" class="eventlayer-btn">+</div>
 				<div id="eventlayer-del" class="eventlayer-btn">-</div>
+				<div id="eventlayer-container-ex" style="display:flex">
+					<!-- 动态扩展的容器 -->
+					<div id="eventlayer-con" style="display:flex"></div>
+				</div>
+
+
 			</div>
 		</div>
 	</div>
@@ -385,7 +390,7 @@
 			border-radius: 2px;
 			transition: all 0.15s ease;
 		}
-		
+
 		.menu>div>div:hover {
 			background: #3F3F3F;
 			color: #4DACFF;
@@ -486,7 +491,7 @@
 			cursor: pointer;
 			transition: all 0.15s ease;
 		}
-		
+
 		.eventlayer-btn:hover {
 			background: #4A4A4A;
 			border-color: #5A5A5A;
@@ -501,7 +506,7 @@
 			border-radius: 2px;
 			padding: 3px;
 		}
-		
+
 		input {
 			background: #3A3A3A;
 			color: #E6E6E6;
@@ -509,7 +514,7 @@
 			border-radius: 2px;
 			padding: 3px;
 		}
-		
+
 		button {
 			background: #3A3A3A;
 			color: #E6E6E6;
@@ -519,7 +524,7 @@
 			cursor: pointer;
 			transition: all 0.15s ease;
 		}
-		
+
 		button:hover {
 			background: #4A4A4A;
 			border-color: #5A5A5A;
@@ -583,7 +588,7 @@
 		li:hover {
 			background-color: #3F3F3F;
 		}
-		
+
 		li:last-child {
 			border-bottom: none;
 		}
@@ -602,23 +607,23 @@
 			border-radius: 6px;
 			background: #252525;
 		}
-		
+
 		/* 美化滚动条 */
 		::-webkit-scrollbar {
 			width: 8px;
 			height: 8px;
 		}
-		
+
 		::-webkit-scrollbar-track {
 			background: #252525;
 			border-radius: 4px;
 		}
-		
+
 		::-webkit-scrollbar-thumb {
 			background: #4A4A4A;
 			border-radius: 4px;
 		}
-		
+
 		::-webkit-scrollbar-thumb:hover {
 			background: #5A5A5A;
 		}
@@ -634,18 +639,18 @@
 			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 			border: 1px solid #4A4A4A;
 		}
-		
+
 		#contextmenu div {
 			padding: 6px 12px;
 			cursor: pointer;
 			transition: all 0.15s ease;
 		}
-		
+
 		#contextmenu div:hover {
 			background-color: #3F3F3F;
 			color: #4DACFF;
 		}
-		
+
 		h3 {
 			color: #4DACFF;
 			border-bottom: 1px solid #3A3A3A;
@@ -703,12 +708,12 @@
 			}, 50);
 		});
 	</script>
-	
+
 	<!-- Vue App Initialization -->
 	<script>
 		// Create Vue app without interfering with existing JS
 		const { createApp, ref, reactive } = Vue;
-		
+
 		// Initialize Vue app
 		const vueApp = createApp({
 			setup() {
@@ -716,36 +721,40 @@
 				const state = reactive({
 					// Your Vue state can go here
 				});
-				
+
 				// Methods can be defined here
 				const methods = {
 					// Your Vue methods can go here
 				};
-				
+
 				return {
 					...state,
 					...methods
 				};
 			}
 		});
-		
+
 		// Mount Vue to a non-critical element to avoid conflicts
 		// This will allow Vue to be available without interfering with existing code
-		document.addEventListener('DOMContentLoaded', function() {
+		document.addEventListener('DOMContentLoaded', function () {
 			// Create a div for Vue to mount to
 			const vueMount = document.createElement('div');
 			vueMount.id = 'vue-app';
 			vueMount.style.display = 'none'; // Hidden by default
 			document.body.appendChild(vueMount);
-			
+
 			// Mount Vue app
 			vueApp.mount('#vue-app');
-			
-			// jQuery example (non-interfering)
-			$(document).ready(function() {
-				// jQuery is now available
-				console.log('jQuery, Vue 3, and SweetAlert2 have been loaded');
-			});
+
+			// 在使用jQuery之前先检查它是否已加载
+			if (typeof jQuery !== 'undefined') {
+				// jQuery 可用
+				jQuery(function () {
+					console.log('jQuery, Vue 3, and SweetAlert2 have been loaded');
+				});
+			} else {
+				console.error('jQuery 未能加载，请检查网络连接或使用本地jQuery库');
+			}
 		});
 	</script>
 </body>

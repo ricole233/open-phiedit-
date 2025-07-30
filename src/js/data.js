@@ -698,7 +698,14 @@ $("m-load").addEventListener('click', () => {
 							sum += all_data.judgeLineList[i].notes.length;
 					if (sum >= 5000) {
 						settingscontrol.settings.player = 0;
-						window.alert("谱面物量较多，已自动关闭预览功能");
+						Swal.fire({
+							toast: true,
+							position: 'top-end',
+							icon: 'warning',
+							title: '谱面物量较多，已自动关闭预览功能',
+							showConfirmButton: false,
+							timer: 3000
+						});
 					}
 				}
 				var reader = new FileReader();
@@ -724,7 +731,14 @@ $("m-load").addEventListener('click', () => {
 									all_data = pec_to_rpe(data);
 								} catch (error) {
 									console.log(error)
-									window.alert("解析错误");
+									Swal.fire({
+										toast: true,
+										position: 'top-end',
+										icon: 'error',
+										title: '解析错误',
+										showConfirmButton: false,
+										timer: 3000
+									});
 								}
 							}
 						};
@@ -787,7 +801,14 @@ $("m-load").addEventListener('click', () => {
 								init();
 							} catch (error) {
 								console.log(error);
-								window.alert("解析错误");
+								Swal.fire({
+									toast: true,
+									position: 'top-end',
+									icon: 'error',
+									title: '解析错误',
+									showConfirmButton: false,
+									timer: 3000
+								});
 							}
 						}
 					};

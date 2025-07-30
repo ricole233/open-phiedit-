@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Vue组件测试</title>
+    <!-- 引入Vue -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #1E1E1E;
+            color: #E6E6E6;
+        }
+        .test-container {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #4A4A4A;
+            background-color: #2D2D2D;
+        }
+        .vue-input-control {
+            background-color: #3A3A3A;
+            color: #E6E6E6;
+            border: 1px solid #4A4A4A;
+            border-radius: 2px;
+            padding: 3px;
+            margin: 5px;
+        }
+        
+        /* ValueInput 组件样式 */
+        .value-input-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .value-input-container.disabled {
+            opacity: 0.7;
+        }
+        
+        .value-input {
+            width: 40px;
+            height: 20px;
+            background-color: #2c2c2c;
+            border: none;
+            font-size: 12px;
+            text-align: center;
+            padding: 0;
+            margin: 0;
+            color: #ccc;
+            outline: none;
+            cursor: ew-resize; /* 默认显示双向箭头 */
+        }
+        
+        .value-input.disabled {
+            cursor: not-allowed;
+            background-color: #252525;
+            color: #666;
+        }
+        
+        .value-input:focus {
+            background-color: #3a3a3a;
+            color: #fff;
+            cursor: text; /* 编辑时显示文本光标 */
+        }
+        
+        .value-input.dragging {
+            cursor: ew-resize;
+            user-select: none;
+        }
+        
+        /* 拖动时禁止文本选择 */
+        .value-input-container:active {
+            user-select: none;
+        }
+        
+        .drag-indicator {
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            border: 1px solid #00a8ff;
+            border-radius: 3px;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+        
+        .drag-indicator.dragging {
+            background-color: rgba(0, 168, 255, 0.1);
+            opacity: 1;
+        }
+        
+        /* MixNumber 组件样式 */
+        .mix-number-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .separator {
+            color: #ccc;
+            user-select: none;
+        }
+        
+        /* LockValueInput 组件样式 */
+        .lock-value-input {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .lock-button {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            background-color: #2c2c2c;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        
+        .lock-button.locked {
+            color: #00a8ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vue组件挂载测试</h1>
+    <p>这个页面测试Vue组件是否能正确挂载和渲染</p>
+
+    <!-- Vue挂载点 -->
+    <div id="app">
+        <h2>基本组件测试</h2>
+        <div class="test-container">
+            <p>ValueInput组件: {{ testValue }}</p>
+            <value-input 
+                v-model="testValue"
+                :step="0.1"
+                :precision="1"
+            ></value-input>
+            <p><small>提示：左右拖动可调节值，按住Shift键大幅度调整，按住Ctrl键微调。双击可输入值，支持表达式计算。</small></p>
+        </div>
+
+        <h2>Mix-Number组件测试</h2>
+        <div class="test-container">
+            <p>MixNumber组件: {{ mixValue }} (如2.25表示2+1/4)</p>
+            <mix-number
+                v-model="mixValue"
+                :denominator="4"
+                :denominator-locked="denominatorLocked"
+                :denominator-list="[2, 4, 8, 16, 32]"
+                @update:denominator-locked="updateDenominatorLocked"
+            ></mix-number>
+            <p><small>提示：第一个输入框是整数部分，第二个是分子，第三个是分母。点击锁按钮可锁定/解锁分母。</small></p>
+        </div>
+    </div>
+
+    <script>
+        // 创建Vue应用
+        const { createApp, ref, defineComponent, watch, computed, nextTick } = Vue;
+
+        // 定义ValueInput组件 - 从真实组件移植
+        const ValueInput = {
+            name: 'ValueInput',
+            props: {
+                modelValue: {
+                    type: [Number, String],
+                    default: 0
+                },
+                min: {
+                    type: Number,
+                    default: -Infinity
+                },
+                max: {
+                    type: Number,
+                    default: Infinity
+                },
+                step: {
+                    type: Number,
+                    default: 1
+                },
+                precision: {
+                    type: Number,
+                    default: 0
+                },
+                disabled: {
+                    type: Boolean,
+                    default: false
+                },
+                loop: {
+                    type: Boolean,
+                    default: false
+                },
+                allowOutOfRange: {
+                    type: Boolean,
+                    default: false
+                },
+                allowedValues: {
+                    type: Array,
+                    default: undefined
+                }
+            },
+            template: `
+                <div 
+                    class="value-input-container" 
+                    @mouseenter="isHovering = true" 
+                    @mouseleave="isHovering = false"
+                    ref="container"
+                    :class="{ 'disabled': disabled }"
+                >
+                    <input 
+                        ref="input"
+                        type="text" 
+                        class="value-input" 
+                        :class="{ 'dragging': isDragging, 'disabled': disabled }"
+                        v-model="displayValue"
+                        @blur="onBlur"
+                        @keydown.enter="onBlur"
+                        @mousedown="handleMouseDown"
+                        @dblclick="enableEdit"
+                        :readonly="!isEditing || disabled"
+                        :disabled="disabled"
+                    />
+                    <div 
+                        v-if="(isHovering || isDragging) && !disabled" 
+                        class="drag-indicator"
+                        :class="{ 'dragging': isDragging }"
+                    >
+                    </div>
+                </div>
+            `,
+            setup(props, { emit }) {
+                // 组件状态
+                const displayValue = ref(formatValue(props.modelValue));
+                const isHovering = ref(false);
+                const isDragging = ref(false);
+                const isEditing = ref(false);
+                const startX = ref(0);
+                const currentValue = ref(Number(props.modelValue));
+                const tempValue = ref(0);
+                const currentPlus = ref(0);
+                const container = ref(null);
+                const input = ref(null);
+
+                const dragSensitivity = {
+                    normal: 0.5,
+                    shift: 2.0,   // 大范围调整
+                    ctrl: 0.1     // 精细调整
+                };
+
+                // 监听value属性变化
+                watch(() => props.modelValue, (newVal) => {
+                    if (!isDragging.value && !isEditing.value) {
+                        currentValue.value = Number(newVal);
+                        displayValue.value = formatValue(newVal);
+                    }
+                });
+
+                // 格式化值为指定精度的字符串
+                function formatValue(val) {
+                    const num = parseFloat(String(val));
+                    return isNaN(num) ? '0' : num.toFixed(props.precision);
+                }
+
+                // 处理值的范围，支持循环模式和允许超出范围模式
+                function handleValueRange(value) {
+                    // 如果提供了允许值列表且不为空，则从列表中选择最接近的值
+                    if (props.allowedValues && props.allowedValues.length > 0) {
+                        // 如果值恰好在列表中，直接返回
+                        if (props.allowedValues.includes(value)) {
+                            return value;
+                        }
+                        
+                        // 否则找到最接近的值
+                        let closestValue = props.allowedValues[0];
+                        let minDiff = Math.abs(value - closestValue);
+                        
+                        for (const allowedValue of props.allowedValues) {
+                            const diff = Math.abs(value - allowedValue);
+                            if (diff < minDiff) {
+                                closestValue = allowedValue;
+                                minDiff = diff;
+                            }
+                        }
+                        
+                        return closestValue;
+                    }
+                    
+                    if (props.allowOutOfRange) {
+                        // 允许超出范围，直接返回值
+                        return value;
+                    }
+                    
+                    if (props.loop) {
+                        // 循环模式
+                        const range = props.max - props.min;
+                        const precision = Math.pow(10, -props.precision);
+                        const adjustedRange = range + precision;
+                        
+                        if (value > props.max) {
+                            // 向上溢出
+                            const overflow = value - props.max;
+                            const loops = Math.floor(overflow / adjustedRange);
+                            const remainder = overflow % adjustedRange;
+                            return props.min + remainder;
+                        } else if (value < props.min) {
+                            // 向下溢出
+                            const underflow = props.min - value;
+                            const loops = Math.floor(underflow / adjustedRange);
+                            const remainder = underflow % adjustedRange;
+                            return props.max - remainder;
+                        }
+                    }
+                    
+                    // 默认行为：限制在范围内
+                    return Math.min(Math.max(value, props.min), props.max);
+                }
+
+                // 失焦或回车时提交值
+                function onBlur() {
+                    isEditing.value = false;
+                    
+                    try {
+                        // 尝试计算表达式
+                        const expressionValue = evaluateExpression(displayValue.value);
+                        const numValue = parseFloat(String(expressionValue));
+                        
+                        if (isNaN(numValue)) {
+                            displayValue.value = formatValue(currentValue.value);
+                            return;
+                        }
+                        
+                        const processedValue = handleValueRange(numValue);
+                        currentValue.value = processedValue;
+                        displayValue.value = formatValue(processedValue);
+                        emit('update:modelValue', processedValue);
+                    } catch (error) {
+                        // 表达式无效，保持原有行为
+                        const numValue = parseFloat(displayValue.value);
+                        
+                        if (isNaN(numValue)) {
+                            displayValue.value = formatValue(currentValue.value);
+                            return;
+                        }
+                        
+                        const processedValue = handleValueRange(numValue);
+                        currentValue.value = processedValue;
+                        displayValue.value = formatValue(processedValue);
+                        emit('update:modelValue', processedValue);
+                    }
+                }
+
+                // 安全地计算表达式
+                function evaluateExpression(expression) {
+                    // 清理表达式，只保留数字和基本运算符
+                    const cleanExpr = expression.replace(/[^0-9+\-*/().]/g, '');
+                    
+                    // 检查表达式是否包含运算符
+                    if (!/[+\-*/]/.test(cleanExpr)) {
+                        return parseFloat(cleanExpr);
+                    }
+                    
+                    // 使用Function构造函数计算表达式，比eval更安全
+                    const result = new Function('return ' + cleanExpr)();
+                    return result;
+                }
+
+                // 启用编辑模式
+                function enableEdit() {
+                    if (props.disabled) return;
+                    
+                    isEditing.value = true;
+                    nextTick(() => {
+                        if (input.value) {
+                            input.value.focus();
+                            input.value.select();
+                        }
+                    });
+                }
+
+                // 处理鼠标按下事件
+                function handleMouseDown(event) {
+                    if (props.disabled) return;
+                    
+                    if (event.detail === 2) {
+                        // 双击事件由dblclick处理
+                        return;
+                    }
+                    
+                    // 只有在非编辑模式下才启动拖动
+                    if (!isEditing.value) {
+                        event.preventDefault();
+                        startDrag(event);
+                    }
+                }
+
+                // 开始拖拽调整值
+                function startDrag(event) {
+                    if (props.disabled) return;
+                    
+                    isDragging.value = true;
+                    startX.value = event.clientX;
+                    
+                    // 记录开始拖动时的值
+                    const initialValue = currentValue.value;
+                    // 重置整数进位计数器
+                    tempValue.value = 0;
+                    currentPlus.value = 0;
+                    
+                    // 跟踪原始累积变化（不受循环限制影响）
+                    let rawAccumulatedChange = 0;
+                    let previousDeltaX = 0;
+                    
+                    const handleMouseMove = (e) => {
+                        if (!isDragging.value) return;
+                        
+                        const deltaX = e.clientX - startX.value;
+                        const deltaDiff = deltaX - previousDeltaX;
+                        previousDeltaX = deltaX;
+                        
+                        let sensitivity = dragSensitivity.normal;
+                        
+                        // 按住shift键大范围调整
+                        if (e.shiftKey) {
+                            sensitivity = dragSensitivity.shift;
+                        } 
+                        // 按住ctrl键精细调整
+                        else if (e.ctrlKey) {
+                            sensitivity = dragSensitivity.ctrl;
+                        }
+                        
+                        const changeIncrement = deltaDiff * sensitivity * props.step;
+                        rawAccumulatedChange += changeIncrement;
+                        
+                        const newValue = initialValue + deltaX * sensitivity * props.step;
+                        const processedValue = handleValueRange(newValue);
+                        
+                        // 计算整数进位 (循环模式)
+                        if (props.loop) {
+                            const range = props.max - props.min + Math.pow(10, -props.precision);
+                            
+                            // 直接从累积变化量计算经过的循环数
+                            const absChange = Math.abs(rawAccumulatedChange);
+                            const cycles = Math.floor(absChange / range);
+                            
+                            // 计算有向循环次数
+                            const directedCycles = cycles * (rawAccumulatedChange >= 0 ? 1 : -1);
+                            
+                            // 只在循环次数变化时触发事件
+                            if (directedCycles !== currentPlus.value) {
+                                const increment = directedCycles - currentPlus.value;
+                                
+                                // 只发送实际变化的部分
+                                if (increment !== 0) {
+                                    emit('intplus', { plus: increment });
+                                }
+                                
+                                currentPlus.value = directedCycles;
+                            }
+                        }
+                        
+                        currentValue.value = processedValue;
+                        displayValue.value = formatValue(processedValue);
+                        emit('update:modelValue', processedValue);
+                    };
+                    
+                    const handleMouseUp = () => {
+                        isDragging.value = false;
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                
+                        // 拖拽结束后，将值对齐到最接近的步长
+                        const step = props.step;
+                        if (step > 0) {
+                            const precision = 10; // 用于处理浮点数精度问题
+                            const snappedValue = Math.round(Math.round(currentValue.value / step) * step * Math.pow(10, precision)) / Math.pow(10, precision);  
+                            const processedValue = handleValueRange(snappedValue); 
+                            currentValue.value = processedValue;
+                            displayValue.value = formatValue(processedValue);
+                        }
+                        
+                        // 如果有允许值列表，确保值在列表中
+                        if (props.allowedValues && props.allowedValues.length > 0) {
+                            currentValue.value = handleValueRange(currentValue.value);
+                            displayValue.value = formatValue(currentValue.value);
+                        }
+                        
+                        emit('update:modelValue', currentValue.value);
+                    };
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                }
+
+                return {
+                    displayValue,
+                    isHovering,
+                    isDragging,
+                    isEditing,
+                    container,
+                    input,
+                    onBlur,
+                    enableEdit,
+                    handleMouseDown
+                };
+            }
+        };
+
+        // 定义LockValueInput组件
+        const LockValueInput = {
+            name: 'LockValueInput',
+            props: {
+                modelValue: {
+                    type: [Number, String],
+                    default: 0
+                },
+                min: {
+                    type: Number,
+                    default: -Infinity
+                },
+                max: {
+                    type: Number,
+                    default: Infinity
+                },
+                step: {
+                    type: Number,
+                    default: 1
+                },
+                precision: {
+                    type: Number,
+                    default: 0
+                },
+                disabled: {
+                    type: Boolean,
+                    default: false
+                },
+                allowedValues: {
+                    type: Array,
+                    default: undefined
+                },
+                defaultLocked: {
+                    type: Boolean,
+                    default: false
+                }
+            },
+            template: `
+                <div class="lock-value-input">
+                    <ValueInput
+                        v-model="innerValue"
+                        :min="min"
+                        :max="max"
+                        :step="step"
+                        :precision="precision"
+                        :disabled="disabled || locked"
+                        :allowed-values="allowedValues"
+                        @update:modelValue="onValueChange"
+                    />
+                    <button 
+                        class="lock-button" 
+                        :class="{ 'locked': locked }"
+                        @click="toggleLock"
+                    >
+                        🔒
+                    </button>
+                </div>
+            `,
+            setup(props, { emit }) {
+                const innerValue = ref(props.modelValue);
+                const locked = ref(props.defaultLocked);
+                
+                watch(() => props.modelValue, (newVal) => {
+                    innerValue.value = newVal;
+                });
+                
+                watch(() => props.defaultLocked, (newVal) => {
+                    locked.value = newVal;
+                });
+                
+                function onValueChange(val) {
+                    emit('update:modelValue', val);
+                }
+                
+                function toggleLock() {
+                    locked.value = !locked.value;
+                    emit('update:locked', locked.value);
+                }
+                
+                return {
+                    innerValue,
+                    locked,
+                    onValueChange,
+                    toggleLock
+                };
+            }
+        };
+        
+        // 定义MixNumber组件 - 从真实组件移植
+        const MixNumber = {
+            name: 'MixNumber',
+            components: {
+                ValueInput,
+                LockValueInput
+            },
+            props: {
+                modelValue: {
+                    type: Number,
+                    default: 0
+                },
+                precision: {
+                    type: Number,
+                    default: 2
+                },
+                step: {
+                    type: Number,
+                    default: 1
+                },
+                denominatorList: {
+                    type: Array,
+                    default: () => []
+                },
+                denominator: {
+                    type: Number,
+                    default: 4
+                },
+                denominatorLocked: {
+                    type: Boolean,
+                    default: false
+                }
+            },
+            template: `
+                <div class="mix-number-container">
+                    <ValueInput
+                        v-model="integerPart"
+                        :step="1"
+                        :precision="0"
+                        @update:modelValue="onIntegerChange"
+                    />
+                    <span class="separator">+</span>
+                    <ValueInput
+                        v-model="numerator"
+                        :min="0"
+                        :max="denominatorValue - 1"
+                        :step="1"
+                        :precision="0"
+                        :loop="true"
+                        @update:modelValue="onNumeratorChange"
+                        @intplus="handleNumeratorIntPlus"
+                    />
+                    <span class="separator">/</span>
+                    <LockValueInput
+                        v-model="denominatorValue"
+                        :min="1"
+                        :step="1"
+                        :precision="0"
+                        :allowed-values="denominatorListProp"
+                        :default-locked="isDenominatorLocked"
+                        @update:modelValue="onDenominatorChange"
+                        @update:locked="onDenominatorLockChange"
+                    />
+                </div>
+            `,
+            setup(props, { emit }) {
+                const integerPart = ref(0);
+                const numerator = ref(0);
+                const denominatorValue = ref(props.denominator);
+                const isDenominatorLocked = ref(props.denominatorLocked);
+                
+                // 创建一个计算属性用于模板中
+                const denominatorListProp = computed(() => {
+                    return props.denominatorList.length > 0 ? props.denominatorList : undefined;
+                });
+                
+                // 如果有分母列表，初始化时选择第一个有效的分母
+                watch(() => props.denominatorList, (newList) => {
+                    if (newList.length > 0 && !newList.includes(denominatorValue.value)) {
+                        denominatorValue.value = newList[0];
+                        updatePartsFromValue(props.modelValue);
+                    }
+                }, { immediate: true });
+                
+                // 监听分母属性变化
+                watch(() => props.denominator, (newValue) => {
+                    if (newValue !== denominatorValue.value) {
+                        const oldValue = internalValue.value;
+                        denominatorValue.value = newValue;
+                        updatePartsFromValue(oldValue);
+                    }
+                });
+                
+                // 监听分母锁定状态变化
+                watch(() => props.denominatorLocked, (newValue) => {
+                    isDenominatorLocked.value = newValue;
+                });
+                
+                const internalValue = computed(() => {
+                    const sign = Math.sign(integerPart.value) || 1;
+                    return integerPart.value + sign * (numerator.value / denominatorValue.value);
+                });
+                
+                function updatePartsFromValue(value) {
+                    const sign = Math.sign(value) || 1;
+                    const absValue = Math.abs(value);
+                    integerPart.value = Math.trunc(value);
+                    
+                    const remainder = absValue - Math.floor(absValue);
+                    if (remainder > 1e-9) {
+                        const newNumerator = remainder * denominatorValue.value;
+                        numerator.value = Math.round(newNumerator);
+                    } else {
+                        numerator.value = 0;
+                    }
+                }
+                
+                watch(() => props.modelValue, (newValue) => {
+                    if (Math.abs(newValue - internalValue.value) > 1e-9) {
+                        updatePartsFromValue(newValue);
+                    }
+                }, { immediate: true });
+                
+                function onIntegerChange() {
+                    emit('update:modelValue', internalValue.value);
+                }
+                
+                function onNumeratorChange() {
+                    emit('update:modelValue', internalValue.value);
+                }
+                
+                function handleNumeratorIntPlus(event) {
+                    if (event.plus) {
+                        // 根据 plus 值更新整数部分
+                        const intChange = Math.floor(event.plus);
+                        if (intChange !== 0) {
+                            integerPart.value += intChange;
+                            emit('update:modelValue', internalValue.value);
+                        }
+                    }
+                }
+                
+                function onDenominatorChange(newDenominator) {
+                    const oldValue = internalValue.value;
+                    if (newDenominator > 0) {
+                        // 检查分母是否在允许的列表中
+                        const denominatorList = props.denominatorList;
+                        if (denominatorList.length > 0 && !denominatorList.includes(newDenominator)) {
+                            // 找到最接近的有效分母值
+                            let closest = denominatorList[0];
+                            let minDiff = Math.abs(newDenominator - closest);
+                            
+                            for (const denom of denominatorList) {
+                                const diff = Math.abs(newDenominator - denom);
+                                if (diff < minDiff) {
+                                    closest = denom;
+                                    minDiff = diff;
+                                }
+                            }
+                            denominatorValue.value = closest;
+                        } else {
+                            denominatorValue.value = newDenominator;
+                        }
+                        updatePartsFromValue(oldValue);
+                        emit('update:modelValue', internalValue.value);
+                    }
+                }
+                
+                function onDenominatorLockChange(locked) {
+                    isDenominatorLocked.value = locked;
+                    emit('update:denominatorLocked', locked);
+                }
+                
+                return {
+                    integerPart,
+                    numerator,
+                    denominatorValue,
+                    isDenominatorLocked,
+                    onIntegerChange,
+                    onNumeratorChange,
+                    handleNumeratorIntPlus,
+                    onDenominatorChange,
+                    onDenominatorLockChange,
+                    denominatorListProp
+                };
+            }
+        };
+
+        // 创建并挂载应用
+        const app = createApp({
+            setup() {
+                const testValue = ref(10);
+                const mixValue = ref(2.25); // 2又1/4
+                const denominatorLocked = ref(false);
+
+                function updateValue(val) {
+                    testValue.value = val;
+                    console.log('Updated value:', val);
+                }
+
+                function updateMixValue(val) {
+                    mixValue.value = val;
+                    console.log('Updated mix value:', val);
+                }
+                
+                function updateDenominatorLocked(val) {
+                    denominatorLocked.value = val;
+                    console.log('Denominator locked:', val);
+                }
+
+                return {
+                    testValue,
+                    mixValue,
+                    denominatorLocked,
+                    updateValue,
+                    updateMixValue,
+                    updateDenominatorLocked
+                };
+            }
+        });
+
+        // 注册组件
+        app.component('value-input', ValueInput);
+        app.component('lock-value-input', LockValueInput);
+        app.component('mix-number', MixNumber);
+
+        // 挂载到DOM
+        app.mount('#app');
+    </script>
+</body>
+</html>

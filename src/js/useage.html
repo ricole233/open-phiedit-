@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>输入组件示例</title>
+  <style>
+    body {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .component-container {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #2d2d2d;
+      border-radius: 4px;
+    }
+    .component-title {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background-color: #3a3a3a;
+      border: none;
+      color: #ccc;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #4a4a4a;
+    }
+    .info {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #aaa;
+    }
+    .value-display {
+      margin-top: 5px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>输入组件示例</h1>
+  
+  <div class="component-container">
+    <div class="component-title">ValueInput 组件</div>
+    <div id="valueInputContainer"></div>
+    <div class="value-display">当前值: <span id="valueInputValue">0</span></div>
+  </div>
+  
+  <div class="component-container">
+    <div class="component-title">TimeInput 组件</div>
+    <div id="timeInputContainer"></div>
+    <div class="value-display">当前值(毫秒): <span id="timeInputValue">0</span></div>
+  </div>
+  
+  <div class="component-container">
+    <div class="component-title">AngleInput 组件</div>
+    <div id="angleInputContainer"></div>
+    <div class="value-display">当前值(度): <span id="angleInputValue">0</span></div>
+  </div>
+  
+  <div class="component-container">
+    <div class="component-title">DoubleInput 组件</div>
+    <div id="doubleInputContainer"></div>
+    <div class="value-display">当前值: <span id="doubleInputValue">[0, 0]</span></div>
+  </div>
+  
+  <div class="component-container">
+    <div class="component-title">MixNumber 组件</div>
+    <div id="mixNumberContainer"></div>
+    <div class="value-display">当前值: <span id="mixNumberValue">0</span></div>
+    <div class="info">
+      分数格式: 整数 + 分子 / 分母, 分母可锁定，分子超过分母会进位
+    </div>
+    <div class="controls">
+      <button class="btn" id="setMixValue">设置值为 2.75</button>
+      <button class="btn" id="setDenominator">设置分母为 8</button>
+      <button class="btn" id="toggleDenomLock">切换分母锁定状态</button>
+    </div>
+    <div class="info" id="mixNumberState">
+      分母状态: 未锁定
+    </div>
+  </div>
+  
+  <!-- 先加载依赖 -->
+  <script src="./inputs/ValueInput.js"></script>
+  <script src="./ratio/ChainRatio.js"></script>
+  <script src="./inputs/LockValueInput.js"></script>
+  <script src="./inputs/TimeInput.js"></script>
+  <script src="./inputs/AngleInput.js"></script>
+  <script src="./inputs/DoubleInput.js"></script>
+  <script src="./inputs/MixNumber.js"></script>
+  
+  <script>
+    // 初始化所有组件
+    document.addEventListener('DOMContentLoaded', () => {
+      // ValueInput 示例
+      const valueInput = new ValueInput({
+        modelValue: 50,
+        min: 0,
+        max: 100,
+        step: 1,
+        precision: 0,
+        onUpdate: (value) => {
+          document.getElementById('valueInputValue').textContent = value;
+        }
+      });
+      document.getElementById('valueInputContainer').appendChild(valueInput.getElement());
+      
+      // TimeInput 示例
+      const timeInput = new TimeInput({
+        modelValue: 3661000, // 1小时1分1秒
+        showHours: true,
+        showMinutes: true,
+        showSeconds: true,
+        showMilliseconds: true,
+        showUnitToggle: true,
+        frameRate: 30,
+        onInput: (value) => {
+          document.getElementById('timeInputValue').textContent = value;
+        }
+      });
+      document.getElementById('timeInputContainer').appendChild(timeInput.getElement());
+      
+      // AngleInput 示例
+      const angleInput = new AngleInput({
+        value: 450, // 1圈+90度
+        showTurns: true,
+        showDegreeSymbol: true,
+        onInput: (value) => {
+          document.getElementById('angleInputValue').textContent = value;
+        }
+      });
+      document.getElementById('angleInputContainer').appendChild(angleInput.getElement());
+      
+      // DoubleInput 示例
+      const doubleInput = new DoubleInput({
+        value: [50, 25],
+        minX: 0,
+        maxX: 100,
+        minY: 0,
+        maxY: 100,
+        precision: 0,
+        onInput: (value) => {
+          document.getElementById('doubleInputValue').textContent = `[${value[0]}, ${value[1]}]`;
+        }
+      });
+      document.getElementById('doubleInputContainer').appendChild(doubleInput.getElement());
+      
+      // MixNumber 示例 - 增强显示和交互
+      const mixNumber = new MixNumber({
+        modelValue: 3.5, // 3 + 1/2
+        denominator: 2,
+        denominatorList: [2, 4, 8, 16], // 允许的分母列表
+        denominatorLocked: false, // 默认不锁定分母
+        onUpdate: (value) => {
+          document.getElementById('mixNumberValue').textContent = value.toFixed(3);
+        },
+        onDenominatorLockChange: (locked) => {
+          document.getElementById('mixNumberState').textContent = 
+            `分母状态: ${locked ? '已锁定' : '未锁定'}`;
+        }
+      });
+      document.getElementById('mixNumberContainer').appendChild(mixNumber.getElement());
+      
+      // 添加按钮事件
+      document.getElementById('setMixValue').addEventListener('click', () => {
+        mixNumber.setValue(2.75); // 设为 2 + 3/4
+      });
+      
+      document.getElementById('setDenominator').addEventListener('click', () => {
+        mixNumber.setDenominator(8); // 设置分母为8
+      });
+      
+      document.getElementById('toggleDenomLock').addEventListener('click', () => {
+        // 切换分母锁定状态
+        const currentLocked = mixNumber.isDenominatorLocked;
+        mixNumber.setDenominatorLocked(!currentLocked);
+      });
+    });
+  </script>
+</body>
+</html>

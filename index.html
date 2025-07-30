@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>open phiedit 5</title>
+	<!-- jQuery -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<!-- Vue 3 -->
+	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	<!-- Golden Layout -->
+	<link rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-base.css">
+	<link rel="stylesheet" href="https://golden-layout.com/files/latest/css/goldenlayout-light-theme.css">
+	<script src="https://golden-layout.com/files/latest/js/goldenlayout.min.js"></script>
+	<!-- SweetAlert2 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+	<div id="mainUI">
+		<audio id="music-player"></audio>
+		<div class="menu-bar">
+			<div id="downloading">
+				保存文件中......
+			</div>
+			<div style="display:flex">
+				<div class="menu">
+					文件
+					<div>
+						<div id="m-load">加载</div>
+						<div id="m-save">保存到本地（rpe 格式）</div>
+						<div id="m-save2">保存到本地（纯文本多 K 格式）</div>
+					</div>
+				</div>
+				<div class="menu">
+					填充
+					<div>
+						<div id="fillnotes-open">曲线音符</div>
+					</div>
+				</div>
+				<div class="menu">
+					编辑
+					<div>
+						<div id="m-event">打开/关闭事件</div>
+						<div id="m-touch"></div>
+						<div id="m-player">打开/关闭预览</div>
+						<div id="m-copy">复制模式：内部剪贴板</div>
+					</div>
+				</div>
+				<div class="menu">
+					帮助
+					<div>
+						<div id="m-help1">制谱器帮助</div>
+						<div id="m-help2">pez打包帮助</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div style="display:flex">
+			<div class="main-area" style="border: 1px solid black; width: 72%;">
+				<div id="mode" style="display:flex">
+					<div class="note-btn" data-mode="computer"><img src="./src/img/1.svg" style="height: 100%;"><span
+							class="note-label"></span></div>
+					<div class="note-btn" data-mode="q"><img src="./src/img/notes/Tap.png" style="height: 20%;"><span
+							class="note-label">Tap</span></div>
+					<div class="note-btn" data-mode="w"><img src="./src/img/notes/Drag.png" style="height: 10%;"><span
+							class="note-label">Drag</span></div>
+					<div class="note-btn" data-mode="e"><img src="./src/img/notes/Flick.png" style="height: 40%;"><span
+							class="note-label">Flick</span></div>
+					<div class="note-btn" data-mode="r"><img src="./src/img/notes/Hold.png" style="height: 100%;"><span
+							class="note-label">Hold</span></div>
+					<div style="margin-left: auto; display:flex">
+						<img src="./src/img/icon1.svg" style="height: 100%;" id="mobile-phone-play">
+						<div style="background: rgb(147, 147, 147); text-align:'center'; padding: 10px; margin-left: 3px; user-select: none;"
+							id="mobile-phone-delete">删除</div>
+					</div>
+				</div>
+				<canvas id="cvs" width="1600px" height="900px" style="width: 100%;">
+				</canvas>
+			</div>
+
+			<div class="main-edit-area">
+				<div style="width: 25%; display:none" id="edit">
+					<h3>音符编辑</h3>
+					X坐标：<input id="edit-x" type="number"><br>
+					起始时间：<input id="edit-time"><br>
+					结束时间：<input id="edit-time2"><br>
+					朝向：<select id="edit-d">
+						<option value="1">Up</option>
+						<option value="2">Down</option>
+					</select>
+					<br>
+					真值：<select id="edit-t">
+						<option value="0">普通音符</option>
+						<option value="1">假音符</option>
+					</select>
+					<br>
+					Y轴偏移：<input id="edit-y" type="number"><br>
+					可视时间：<input id="edit-visibleTime" type="number"><br>
+				</div>
+				<div style="width: 25%; display:none" id="edit2">
+					<h3>事件编辑</h3>
+					<p id="event-name"></p>
+					缓动类型：<select id="edit2-ease">
+						<option value="1">1 linear</option>
+						<option value="2">2 sin out</option>
+						<option value="3">3 sin in</option>
+						<option value="4">4 quad out</option>
+						<option value="5">5 quad in</option>
+						<option value="6">6 sin io</option>
+						<option value="7">7 quad io</option>
+						<option value="8">8 cubic out</option>
+						<option value="9">9 cubic in</option>
+						<option value="10">10 quart out</option>
+						<option value="11">11 quart in</option>
+						<option value="12">12 cubic io</option>
+						<option value="13">13 quart io</option>
+						<option value="14">14 quint out</option>
+						<option value="15">15 quint in</option>
+						<option value="16">16 expo out</option>
+						<option value="17">17 expo in</option>
+						<option value="18">18 circ out</option>
+						<option value="19">19 circ in</option>
+						<option value="20">20 back out</option>
+						<option value="21">21 back in</option>
+						<option value="22">22 circ in</option>
+						<option value="23">23 back io</option>
+						<option value="24">24 elastic out</option>
+						<option value="25">25 elastic in</option>
+						<option value="26">26 bounce out</option>
+						<option value="27">27 bounce in</option>
+						<option value="28">28 bounce io</option>
+					</select>
+					<br>
+					起始时间：<input id="edit2-time"><br>
+					结束时间：<input id="edit2-time2"><br>
+					起始值：<input id="edit2-st"><br>
+					结束值：<input id="edit2-ed"><br>
+				</div>
+				<div style="width: 25%; display:block" id="edit3">
+					<h3>判定线编辑</h3>
+					名称：<input id="edit3-name"><br>
+					父线：<input id="edit3-fa" type="number"><br>
+					bpm倍率：<input id="edit3-bpmfactor" type="number"><br>
+				</div>
+				<div style="width: 25%; display:none" id="edit4">
+					<h3>音符批量编辑</h3>
+					数值种类：
+					<select id="edit4-t">
+						<option value="positionX">X</option>
+						<option value="startTime">起始时间</option>
+						<option value="endTime">结束时间</option>
+						<option value="yOffset">Y轴偏移</option>
+						<option value="line">所在判定线（只支持“设为此值”）</option>
+					</select><br>
+					数值下界：<input id="edit4-v1"><br>
+					数值上界：<input id="edit4-v2"><br>
+					缓动类型：<select id="edit4-ease">
+						<option value="1">1 linear</option>
+						<option value="2">2 sin out</option>
+						<option value="3">3 sin in</option>
+						<option value="4">4 quad out</option>
+						<option value="5">5 quad in</option>
+						<option value="6">6 sin io</option>
+						<option value="7">7 quad io</option>
+						<option value="8">8 cubic out</option>
+						<option value="9">9 cubic in</option>
+						<option value="10">10 quart out</option>
+						<option value="11">11 quart in</option>
+						<option value="12">12 cubic io</option>
+						<option value="13">13 quart io</option>
+						<option value="14">14 quint out</option>
+						<option value="15">15 quint in</option>
+						<option value="16">16 expo out</option>
+						<option value="17">17 expo in</option>
+						<option value="18">18 circ out</option>
+						<option value="19">19 circ in</option>
+						<option value="20">20 back out</option>
+						<option value="21">21 back in</option>
+						<option value="22">22 circ in</option>
+						<option value="23">23 back io</option>
+						<option value="24">24 elastic out</option>
+						<option value="25">25 elastic in</option>
+						<option value="26">26 bounce out</option>
+						<option value="27">27 bounce in</option>
+						<option value="28">28 bounce io</option>
+					</select>
+					<br>
+					修改方式：<select id="edit4-op">
+						<option value="add">增加此值</option>
+						<option value="set">设为此值</option>
+						<option value="mul">乘以此值</option>
+						<option value="max">取最大</option>
+						<option value="min">取最小</option>
+						<option value="flip">以此值为中心翻转</option>
+					</select>
+					<br>
+					周期数列：<input id="edit4-cycle" value="1">
+					<br>
+					扰动：<input id="edit4-rand" type="number" value="0"><br>
+					<button id="edit4-impl">执行</button>
+				</div>
+			</div>
+			<div class="judgeline-edit">
+				<!-- 操作栏 -->
+				<div id="m-addline">添加判定线</div>
+				<div style="display:flex">
+					<!-- 判定线选择 -->
+					<div id="line-selector">
+						<div id="line-selected"></div>
+						<ul id="lines" style="width: 30%; display: none"></ul>
+					</div>
+					<span style="-webkit-user-select: none; user-select: none;">&nbsp;</span>
+					<!-- 事件层级选择 -->
+					<div style="display:flex">
+						<div id="eventlayer-ex" class="eventlayer-btn">ex</div>
+						<div id="eventlayer-add" class="eventlayer-btn">+</div>
+						<div id="eventlayer-del" class="eventlayer-btn">-</div>
+						<!-- 动态扩展的容器 -->
+						<div id="eventlayer-con" style="display:flex"></div>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<div class="project-edit-area">
+			<div style="display:flex">
+				bpm：
+				<div id="s-bpm" style="border: 1px solid; padding: 3px; user-select: none; background: #EEE;">80</div>
+				&nbsp;
+				竖向格子数：
+				<input value="1" type="number" id="s-shu" style="width: 100px">
+				&nbsp;
+				横向格子数：
+				<input value="1" type="number" id="s-heng" style="width: 100px">
+			</div>
+		</div>
+
+
+	</div>
+	<div class="window" id="window-fillnotes">
+		<div class="content">
+			<h2 style="margin-top:0px; margin-left:5px;">曲线填充音符</h2>
+			测试功能<br><br>
+			<button class="close-btn" onclick="this.parentNode.parentNode.style.display='none'">&times;</button>
+			起始时间：<input id="fillnotes-time"><br>
+			结束时间：<input id="fillnotes-time2"><br>
+			<input type="checkbox" id="fillnotes-flag">包含边界<br>
+			x 起点<input id="fillnotes-x"><br>
+			x 终点：<input id="fillnotes-x2"><br>
+			填充：<select id="fillnotes-t">
+				<option value="1">tap</option>
+				<option value="3">flick</option>
+				<option value="4" selected>drag</option>
+			</select><br>
+			密度：<input id="fillnotes-density" value="0:1/4"><br>
+			曲线类型：<select id="fillnotes-ease">
+				<option value="1">1 linear</option>
+				<option value="2">2 sin out</option>
+				<option value="3">3 sin in</option>
+				<option value="4">4 quad out</option>
+				<option value="5">5 quad in</option>
+				<option value="6">6 sin io</option>
+				<option value="7">7 quad io</option>
+				<option value="8">8 cubic out</option>
+				<option value="9">9 cubic in</option>
+				<option value="10">10 quart out</option>
+				<option value="11">11 quart in</option>
+				<option value="12">12 cubic io</option>
+				<option value="13">13 quart io</option>
+				<option value="14">14 quint out</option>
+				<option value="15">15 quint in</option>
+				<option value="16">16 expo out</option>
+				<option value="17">17 expo in</option>
+				<option value="18">18 circ out</option>
+				<option value="19">19 circ in</option>
+				<option value="20">20 back out</option>
+				<option value="21">21 back in</option>
+				<option value="22">22 circ in</option>
+				<option value="23">23 back io</option>
+				<option value="24">24 elastic out</option>
+				<option value="25">25 elastic in</option>
+				<option value="26">26 bounce out</option>
+				<option value="27">27 bounce in</option>
+				<option value="28">28 bounce io</option>
+			</select><br>
+			<button id="fillnotes">确认</button>
+		</div>
+	</div>
+	<div class="window" id="window-bpmlist">
+		<div class="content" style="overflow-y: auto;">
+			<h2 style="margin-top:0px; margin-left:5px;">BPM 管理</h2>
+			<button class="close-btn" onclick="this.parentNode.parentNode.style.display='none'">&times;</button>
+			<div id="bpmlist">
+
+			</div>
+			<button id="bpmlist-add">添加</button>
+		</div>
+	</div>
+	<div class="window" id="window-help">
+		<div class="content" style="overflow-y: auto;">
+			<h2 style="margin-top:0px; margin-left:5px;">帮助页面</h2>
+			<button class="close-btn" onclick="this.parentNode.parentNode.style.display='none'">&times;</button>
+			<div id="help-content">
+
+			</div>
+		</div>
+	</div>
+	<div id="contextmenu">
+		<div id="contextmenu-toTap">to Tap</div>
+		<div id="contextmenu-toDrag">to Drag</div>
+		<div id="contextmenu-toFlick">to Flick</div>
+		<div id="contextmenu-filp">绕 y 轴翻转</div>
+	</div>
+	<style>
+		/* 弹出窗口 */
+		.window {
+			background: #0009;
+			z-index: 114514;
+			width: 100%;
+			height: 100%;
+			/* 居中 */
+			display: none;
+			justify-content: center;
+			align-items: center;
+			/* 定位 */
+			position: fixed;
+			left: 0px;
+			top: 0px;
+		}
+
+		.window>h2 {
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		.content {
+			background: #FFF;
+			padding: 10px;
+			/* 定位 */
+			position: relative;
+			width: 61.8%;
+			height: 61.8%;
+		}
+
+		.close-btn {
+			font-size: 20px;
+			font-weight: bold;
+			padding: 0 10px;
+			cursor: pointer;
+			border: none;
+			background: none;
+			transition: all 0.2s ease;
+			/* 定位 */
+			position: absolute;
+			top: 0;
+			right: 0;
+		}
+
+		.close-btn:hover {
+			background: rgb(255, 217, 217);
+		}
+
+		/* 主菜单 */
+		.menu {
+			padding: 10px;
+			border-radius: 3px;
+			background: #EEE;
+			-webkit-user-select: none;
+			user-select: none;
+			z-index: 1000; /* 提高z-index */
+			width: 50px;
+			text-align: center;
+			position: relative; /* 确保相对定位 */
+		}
+
+		.menu>div {
+			display: none;
+			position: absolute;
+			background: #EEE;
+			padding: 10px;
+			border-radius: 3px;
+			transition: .2s ease;
+			z-index: 1001; /* 比菜单本身更高 */
+		}
+
+		.menu>div>div {
+			margin-top: 10px;
+		}
+
+		.menu:hover>div {
+			display: block;
+		}
+		
+		/* 确保菜单可以溢出显示 */
+		.lm_content {
+			overflow: visible !important; /* 允许内容溢出 */
+		}
+		
+		/* 只为菜单容器设置overflow:visible */
+		.lm_item.lm_stack:has(.menu-bar) .lm_content {
+			overflow: visible !important;
+		}
+		
+		/* 其他容器保持overflow:auto */
+		.lm_item.lm_stack:not(:has(.menu-bar)) .lm_content {
+			overflow: auto !important;
+		}
+		
+		/* 确保菜单容器的z-index高于其他容器 */
+		.lm_item.lm_stack:has(.menu-bar) {
+			z-index: 999 !important;
+		}
+		
+		/* 菜单容器样式 */
+		.menu-bar {
+			width: 100%;
+			height: 100%;
+			overflow: visible !important; /* 关键：允许内容溢出 */
+			z-index: 1000;
+			position: relative;
+		}
+
+		/* 下载提示 */
+		#downloading {
+			position: fixed;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: auto;
+			padding: 10px;
+			z-index: 1919810;
+			display: none;
+			background: #b5ffb1;
+		}
+
+		/* 修改操作模式 */
+		#mode {
+			width: 100%;
+			height: 50px;
+			margin-top: 10px;
+			margin-bottom: 10px;
+		}
+
+		/* 音符按钮样式 */
+		.note-btn {
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 5px 10px;
+			margin: 0 2px;
+			min-width: 40px;
+			height: 40px;
+			cursor: pointer;
+			border: 2px solid transparent;
+			border-radius: 4px;
+			transition: all 0.15s ease;
+			background-color: #f5f5f5;
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		}
+
+		.note-btn:hover {
+			background-color: #e8e8e8;
+		}
+
+		.note-btn.active {
+			border-color: #00a8ff;
+			background-color: #e0f3ff;
+			box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) inset;
+			transform: translateY(2px);
+		}
+
+		.note-label {
+			position: absolute;
+			bottom: 1px;
+			font-size: 10px;
+			color: #555;
+		}
+
+		body {
+			touch-action: pan-x pan-y manipulation;
+			/* 允许缩放和拖动，但禁用滚动 */
+			overflow: hidden;
+			/* 隐藏溢出的内容 */
+			margin: 0;
+			padding: 0;
+		}
+
+		/* 时间层级选项 */
+		.eventlayer-btn {
+			border: 1px solid #000;
+			padding: 5px;
+			border-radius: 3px;
+			margin: 1px 1px 1px 1px;
+			-webkit-user-select: none;
+			user-select: none;
+			height: 20px;
+			margin-top: 10px;
+		}
+
+		select {
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		/* 触控模式 */
+		#mode>img {
+			margin-left: 3px;
+		}
+
+		/* bpm list */
+		.bpmlist-show {
+			margin: 5px 5px 5px 5px;
+			display: flex;
+			border: 1px solid #BBB;
+			padding: 10px;
+		}
+
+		.bpmlist-show>input {
+			height: 15px;
+		}
+
+		/* 下拉框 */
+		#line-selector {
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		#line-selected {
+			border: 1px solid;
+			padding: 5px;
+		}
+
+		ul {
+			display: block;
+			position: absolute;
+			background: rgb(255, 255, 255);
+			margin-top: 0px;
+			border: 1px solid;
+			/* overflow: auto; */
+			/* max-height: 70%; */
+			list-style: none;
+			padding: 0px;
+		}
+
+		li {
+			border: 1px solid;
+			/* padding: 5px; */
+			transition: .2s ease;
+			-webkit-user-select: none;
+			user-select: none;
+		}
+
+		li:hover {
+			background-color: #DDD;
+		}
+
+		/* 滚动条 */
+		#scrollbar {
+			height: 30px;
+			width: 12px;
+			background: #AAA;
+		}
+
+		#scrollbar-container {
+			width: 12px;
+			border: 1px solid #000;
+		}
+
+		/* 右键菜单 */
+		#contextmenu {
+			position: fixed;
+			z-index: 114514;
+			background: #FFF;
+			padding: 10px;
+			display: none;
+		}
+
+		::-webkit-scrollbar {
+			width: 6px;
+			/* 细滚动条宽度 */
+		}
+
+		::-webkit-scrollbar-thumb {
+			background-color: #666;
+			/* AE风格滚动条颜色 */
+			border-radius: 2px;
+			/* 更小的圆角 */
+		}
+
+		::-webkit-scrollbar-thumb:hover {
+			background-color: #888;
+			/* AE风格悬停颜色 */
+		}
+
+		::-webkit-scrollbar-track {
+			background-color: #333;
+			/* AE风格轨道颜色 */
+		}
+
+		.value-input {
+			/* 输入框样式 */
+			width: 30px;
+			height: 20px;
+			background-color: transparent;
+			border: none;
+			background-color: #2c2c2c;
+			font-size: 12px;
+			text-align: center;
+			padding: 0;
+			margin: 0;
+		}
+
+		/* Golden Layout 相关样式 */
+		#mainUI {
+			width: 100vw;
+			height: 100vh;
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+
+		.lm_content {
+			overflow: auto;
+		}
+
+		.menu-bar {
+			width: 100%;
+			height: 100%;
+			overflow: visible;
+			z-index: 10;
+		}
+
+		.main-area {
+			width: 100% !important;
+			height: 100%;
+			overflow: hidden;
+		}
+
+		.main-edit-area {
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+		}
+
+		.judgeline-edit {
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+		}
+
+		.project-edit-area {
+			width: 100%;
+			height: 100%;
+			overflow: auto;
+			padding: 10px;
+		}
+		.lm_header .lm_tab .lm_active .lm_controls>li{
+			height:auto !important;
+			overflow: hidden !important;
+		}
+
+		/* 确保canvas正确显示 */
+		#cvs {
+			width: 100%;
+			height: calc(100% - 70px);
+		}
+
+		/* 主菜单 - 备用方案 */
+		.menu {
+			padding: 10px;
+			border-radius: 3px;
+			background: #EEE;
+			-webkit-user-select: none;
+			user-select: none;
+			z-index: 1000; /* 提高z-index */
+			width: 50px;
+			text-align: center;
+			position: relative; /* 确保相对定位 */
+		}
+
+		.menu>div {
+			display: none;
+			position: fixed; /* 改为固定定位，确保不受父元素限制 */
+			background: #EEE;
+			padding: 10px;
+			border-radius: 3px;
+			transition: .2s ease;
+			z-index: 1001; /* 比菜单本身更高 */
+			box-shadow: 0 2px 10px rgba(0,0,0,0.2); /* 添加阴影增强视觉效果 */
+		}
+
+		/* 使用JS控制菜单显示，不再使用CSS hover */
+		.menu-active>div {
+			display: block;
+		}
+	</style>
+	<script src="./src/js/math.js"></script>
+	<script src="./src/js/note.js"></script>
+	<script src="./src/js/data.js"></script>
+	<script src="./src/js/main.js"></script>
+	<script src="./src/js/renderer.js"></script>
+	<script src="./src/js/contextmenu.js"></script>
+
+	<script>
+		// 添加音符按钮选择反馈
+		document.addEventListener('DOMContentLoaded', function () {
+			// 按钮模式与全局mode变量的映射关系
+			const modeMapping = {
+				'computer': 'computer',
+				'q': 'q',
+				'w': 'w',
+				'e': 'e',
+				'r': 'r'
+			};
+
+			// 初始化
+			setTimeout(() => {
+				updateActiveNoteBtn(window.mode || 'computer');
+			}, 500);
+
+			// 为每个音符按钮添加点击处理
+			const noteBtns = document.querySelectorAll('.note-btn');
+
+			// 更新当前活动按钮
+			function updateActiveNoteBtn(activeMode) {
+				noteBtns.forEach(btn => {
+					const btnMode = btn.getAttribute('data-mode');
+					if (btnMode === activeMode) {
+						btn.classList.add('active');
+						btn.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2) inset';
+						btn.style.transform = 'translateY(2px)';
+					} else {
+						btn.classList.remove('active');
+						btn.style.boxShadow = '';
+						btn.style.transform = '';
+					}
+				});
+			}
+
+			// 监听全局mode变量变化（更频繁地检查，以确保UI反应迅速）
+			setInterval(() => {
+				if (window.mode) {
+					updateActiveNoteBtn(window.mode);
+				}
+			}, 50);
+			
+			// 修复菜单层级问题
+			setTimeout(() => {
+				// 找到包含菜单的容器
+				const menuContainer = document.querySelector('.lm_item .menu-bar');
+				if (menuContainer) {
+					// 找到包含菜单的lm_content
+					let parent = menuContainer.parentElement;
+					while (parent && !parent.classList.contains('lm_content')) {
+						parent = parent.parentElement;
+					}
+					
+					if (parent) {
+						// 设置overflow为visible
+						parent.style.overflow = 'visible';
+						
+						// 找到包含lm_content的lm_item
+						let itemParent = parent.parentElement;
+						while (itemParent && !itemParent.classList.contains('lm_item')) {
+							itemParent = itemParent.parentElement;
+						}
+						
+						if (itemParent) {
+							// 增加z-index
+							itemParent.style.zIndex = '999';
+						}
+					}
+					
+					// 改进菜单交互
+					const menus = document.querySelectorAll('.menu');
+					menus.forEach(menu => {
+						menu.style.zIndex = '1000';
+						const dropdown = menu.querySelector('div');
+						
+						if (dropdown) {
+							dropdown.style.zIndex = '1001';
+							
+							// 设置延时变量，用于处理菜单显示/隐藏的延迟
+							let menuTimeout = null;
+							
+							// 鼠标进入菜单
+							menu.addEventListener('mouseenter', function() {
+								// 清除任何现有的隐藏计时器
+								if (menuTimeout) {
+									clearTimeout(menuTimeout);
+									menuTimeout = null;
+								}
+								
+								// 计算下拉框位置
+								const menuRect = menu.getBoundingClientRect();
+								dropdown.style.top = (menuRect.bottom + 2) + 'px';
+								dropdown.style.left = menuRect.left + 'px';
+								
+								// 添加激活类
+								menu.classList.add('menu-active');
+							});
+							
+							// 鼠标离开菜单
+							menu.addEventListener('mouseleave', function(e) {
+								// 检查是否移动到了子菜单
+								const toElement = e.relatedTarget;
+								if (dropdown.contains(toElement)) {
+									// 如果移动到了子菜单，不隐藏
+									return;
+								}
+								
+								// 设置延时，给用户时间移动到子菜单
+								menuTimeout = setTimeout(() => {
+									// 检查鼠标是否在子菜单上
+									if (!dropdown.matches(':hover')) {
+										menu.classList.remove('menu-active');
+									}
+								}, 100);
+							});
+							
+							// 鼠标进入子菜单
+							dropdown.addEventListener('mouseenter', function() {
+								// 清除任何现有的隐藏计时器
+								if (menuTimeout) {
+									clearTimeout(menuTimeout);
+									menuTimeout = null;
+								}
+								// 确保菜单保持显示
+								menu.classList.add('menu-active');
+							});
+							
+							// 鼠标离开子菜单
+							dropdown.addEventListener('mouseleave', function(e) {
+								// 检查是否移回到了父菜单
+								const toElement = e.relatedTarget;
+								if (menu === toElement || menu.contains(toElement)) {
+									// 如果移回到了父菜单，不隐藏
+									return;
+								}
+								
+								// 设置延时隐藏
+								menuTimeout = setTimeout(() => {
+									menu.classList.remove('menu-active');
+								}, 100);
+							});
+						}
+					});
+				}
+			}, 500);
+		});
+
+		// Golden Layout 初始化
+		document.addEventListener('DOMContentLoaded', function () {
+			// 等待页面完全加载
+			setTimeout(initGoldenLayout, 100);
+		});
+
+		function initGoldenLayout() {
+			try {
+				// 确保DOM已经准备好
+				const mainUIElement = document.getElementById('mainUI');
+				if (!mainUIElement) {
+					console.error('mainUI element not found');
+					return;
+				}
+
+				// 创建一个容器来存放原始内容的引用
+				const originalElements = {
+					menuBar: document.querySelector('.menu-bar') || document.querySelector('div[style="display:flex"]:first-child'),
+					mainArea: document.querySelector('.main-area') || document.querySelector('div[style*="border: 1px solid black; width: 72%"]'),
+					mainEditArea: document.querySelector('.main-edit-area'),
+					judgelineEdit: document.querySelector('.judgeline-edit'),
+					projectEditArea: document.querySelector('.project-edit-area'),
+					// 备用选择器
+					editElements: document.querySelectorAll('#edit, #edit2, #edit3, #edit4'),
+					lineSelector: document.querySelector('#line-selector') ? document.querySelector('#line-selector').parentElement : null,
+					bpmElement: document.querySelector('#s-bpm') ? document.querySelector('#s-bpm').parentElement : null
+				};
+
+				// 保存原始内容，以便在失败时恢复
+				const originalContent = mainUIElement.innerHTML;
+
+				// 创建容器元素但不清空mainUI
+				const menuBarElement = document.createElement('div');
+				menuBarElement.className = 'menu-bar-container';
+				
+				const mainAreaElement = document.createElement('div');
+				mainAreaElement.className = 'main-area-container';
+				
+				const mainEditAreaElement = document.createElement('div');
+				mainEditAreaElement.className = 'main-edit-area-container';
+				
+				const judgelineEditElement = document.createElement('div');
+				judgelineEditElement.className = 'judgeline-edit-container';
+
+				const projectEditAreaElement = document.createElement('div');
+				projectEditAreaElement.className = 'project-edit-area-container';
+
+				// 设置mainUI样式
+				mainUIElement.style.width = '100vw';
+				mainUIElement.style.height = '100vh';
+				mainUIElement.style.position = 'absolute';
+				mainUIElement.style.top = '0';
+				mainUIElement.style.left = '0';
+
+				// 创建布局配置
+				const config = {
+					settings: {
+						hasHeaders: true, //允许显示
+						showPopoutIcon: true,
+						showMaximiseIcon: true,
+						showCloseIcon: true,
+						reorderEnabled: true, 
+						selectionEnabled: true 
+					},
+					dimensions: {
+						borderWidth: 2, // 减小边框宽度
+						minItemHeight: 10,
+						minItemWidth: 10,
+						// headerHeight: 30, // 标题栏高度设为0
+						dragProxyWidth: 300,
+						dragProxyHeight: 200
+					},
+					content: [{
+						type: 'row',
+						content: [
+							{
+								type: 'column',
+								content: [
+									{
+										type: 'component',
+										componentName: 'menu-bar',
+										title: '菜单栏',
+										height: 7,
+										isClosable: false
+									},
+									{
+										type: 'row',
+										height: 70,
+										content: [
+											{
+												type: 'component',
+												componentName: 'main-area',
+												title: '主区域',
+												width: 65
+											},
+											{
+												type: 'component',
+												componentName: 'main-edit-area',
+												title: '编辑区域',
+												width: 35
+											}
+										]
+									},
+									{
+										type: 'row',
+										height: 20,
+										content: [
+											{
+												type: 'component',
+												componentName: 'judgeline-edit',
+												title: '判定线编辑',
+												width: 50
+											},
+											{
+												type: 'component',
+												componentName: 'project-edit-area',
+												title: '项目设置',
+												width: 50
+											}
+										]
+									}
+								]
+							}
+						]
+					}]
+				};
+
+				// 创建Golden Layout实例
+				const layout = new GoldenLayout(config, mainUIElement);
+
+				// 注册组件 - 使用闭包保存原始元素引用
+				layout.registerComponent('menu-bar', function (container, state) {
+					container.getElement().append(menuBarElement);
+				});
+
+				layout.registerComponent('main-area', function (container, state) {
+					container.getElement().append(mainAreaElement);
+				});
+
+				layout.registerComponent('main-edit-area', function (container, state) {
+					container.getElement().append(mainEditAreaElement);
+				});
+
+				layout.registerComponent('judgeline-edit', function (container, state) {
+					container.getElement().append(judgelineEditElement);
+				});
+
+				layout.registerComponent('project-edit-area', function (container, state) {
+					container.getElement().append(projectEditAreaElement);
+				});
+
+				// 先清空mainUI，然后初始化布局
+				const tempContent = mainUIElement.innerHTML;
+				mainUIElement.innerHTML = '';
+				layout.init();
+
+				// 移动原始元素到新容器，保留事件监听器
+				if (originalElements.menuBar) {
+					menuBarElement.appendChild(originalElements.menuBar);
+				}
+
+				if (originalElements.mainArea) {
+					mainAreaElement.appendChild(originalElements.mainArea);
+				}
+
+				if (originalElements.mainEditArea) {
+					mainEditAreaElement.appendChild(originalElements.mainEditArea);
+				} else if (originalElements.editElements.length > 0) {
+					originalElements.editElements.forEach(el => {
+						if (el) mainEditAreaElement.appendChild(el);
+					});
+				}
+
+				if (originalElements.judgelineEdit) {
+					judgelineEditElement.appendChild(originalElements.judgelineEdit);
+				} else if (originalElements.lineSelector) {
+					judgelineEditElement.appendChild(originalElements.lineSelector);
+				}
+
+				if (originalElements.projectEditArea) {
+					projectEditAreaElement.appendChild(originalElements.projectEditArea);
+				} else if (originalElements.bpmElement) {
+					projectEditAreaElement.appendChild(originalElements.bpmElement);
+				}
+
+				// 响应窗口大小变化
+				window.addEventListener('resize', function () {
+					layout.updateSize();
+				});
+
+				// 保存布局实例以便后续使用
+				window.goldenLayout = layout;
+
+			} catch (error) {
+				console.error('Golden Layout 初始化失败:', error);
+				// 发生错误时，恢复原始布局
+				Swal.fire({
+					title: '布局初始化失败',
+					text: '使用原始布局继续: ' + error.message,
+					icon: 'warning',
+					confirmButtonText: '确定'
+				});
+			}
+		}
+	</script>
+</body>
+
+</html>

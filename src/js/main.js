@@ -34,10 +34,34 @@ imgs[0].src = notes_path + "Tap.png";
 imgs[1].src = notes_path + "Hold.png";
 imgs[2].src = notes_path + "Flick.png";
 imgs[3].src = notes_path + "Drag.png";
-// imgs[4].src = notes_path + "Tap.png";
-// imgs[5].src = notes_path + "Hold.png";
-// imgs[6].src = notes_path + "Flick.png";
-// imgs[7].src = notes_path + "Drag.png";
+
+// 加载特效图片
+const effect_path = "./src/img/effect/";
+var effectImgs = [];
+for (let i = 1; i <= 31; i++) {
+    const img = new Image();
+    img.src = effect_path + `img-${i}.png`;
+    effectImgs.push(img);
+}
+
+// 初始化特效数组
+var activeEffects = [];
+
+//打击音效
+var noteAudios=[new Audio(),new Audio(),new Audio(),new Audio()];
+//打击音效路径
+const audio_path="./src/audios/notes/";
+noteAudios[0].src=audio_path+"tap.wav";
+noteAudios[1].src=audio_path+"hold.wav";
+noteAudios[2].src=audio_path+"flick.wav";
+noteAudios[3].src=audio_path+"drag.wav";
+//节奏音效
+const rhythmAudios=[new Audio(),new Audio(),new Audio(),new Audio()];
+const rhythmAudioPath="./src/audios/";
+rhythmAudios[0].src=rhythmAudioPath+"kick-long.wav";
+rhythmAudios[1].src=rhythmAudioPath+"kick-short.wav";
+// rhythmAudios[2].src=rhythmAudioPath+"3.wav";
+// rhythmAudios[3].src=rhythmAudioPath+"4.wav";
 var n = 114514, heng = 4, shu = 7, hi = 200; // 小节数，横着分几格，竖着分几格，每小节高度
 var selection = []; // 当前选中的音符
 var selection_ev = []; // 当前选中的事件，格式：[编号，类型]
@@ -413,6 +437,7 @@ var eventcontrol = {
 		return ans;
 	}
 };
+// 特效管理
 // 右侧设置面板管理
 // ============================================================================================
 var sidebarcontrol = {
@@ -759,7 +784,7 @@ function main() {
 		// 更新播放时间
 		playercontrol.updateTime();
 		// 直接渲染游戏画面
-		renderer.main([Math.floor(-rdelta / hi), -rdelta % hi, hi], 1);
+		renderer.main([Math.floor(-rdelta / hi), -rdelta % hi, hi], 1, true);
 
 		// 绘制边框，填充渲染区域外的部分
 		ctx.fillStyle = color.background2;
@@ -1080,15 +1105,7 @@ $("eventlayer-del").addEventListener("click", () => { // 删除事件层级
 })
 $("m-addline").addEventListener('click', () => {
 	all_data.judgeLineList.push(new_judge_line());
-	// 使用Toast提示，显示在右上角且自动消失
-	Swal.fire({
-		toast: true,
-		position: 'top-end',
-		icon: 'success',
-		title: '添加成功',
-		showConfirmButton: false,
-		timer: 2000
-	});
+	window.alert("添加成功");
 });
 $("m-event").addEventListener('click', () => {
 	if (edit_event == 1) {

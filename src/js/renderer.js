@@ -20,7 +20,7 @@ let renderer = {
 			let line = all_data.judgeLineList[i];
 			for (let j = 0; j < line.eventLayers.length; j++) {
 				if (line.eventLayers[j] != null) {
-					for(e of ["moveXEvents", "moveYEvents", "rotateEvents", "alphaEvents", "speedEvents"]) {
+					for (e of ["moveXEvents", "moveYEvents", "rotateEvents", "alphaEvents", "speedEvents"]) {
 						// 一定要先检查是否存在，有些层级可能没有事件
 						if (line.eventLayers[j][e] != null)
 							line.eventLayers[j][e].sort((a, b) => to(a.startTime) - to(b.startTime));
@@ -188,8 +188,32 @@ let renderer = {
 		else if (r == con.length - 1) return con[r][name];
 		return con[r][name] + (con[r + 1][name] - con[r][name]) * calcease(con[r].easing, (x - con[r].x) / (con[r + 1].x - con[r].x));
 	},
+	//绘制一次打击特效
+	draw_hit_effect: function (t, x, y, type) {//t为时间，x,y为特效位置坐标（canvas坐标系），type为音符类型
+		// 创建一个新的特效对象
+		const effect = {
+			x: x,                  // 特效X坐标(canvas坐标系)
+			y: y,                  // 特效Y坐标(canvas坐标系)
+			frameIndex: 0,         // 当前帧索引
+			frameCount: 31,        // 总帧数
+			size: 120,             // 特效大小
+			type: type,            // 音符类型(1-tap, 2-hold, 3-flick, 4-drag)
+			isActive: true         // 特效是否活跃
+		};
+		
+		// 播放对应音效
+		if (type >= 1 && type <= 4) {
+			// 克隆音频节点以允许重叠播放
+			const audioClone = noteAudios[type-1].cloneNode();
+			audioClone.volume = 0.3; // 设置适当音量
+			audioClone.play();
+		}
+		
+		// 添加到活跃特效列表
+		activeEffects.push(effect);
+	},
 	// 主绘制函数
-	main: function (t, show_combo_UI) { // t 为一个带分数表示时间
+	main: function (t, enable_combo_UI, enable_hit_effect) { // t 为一个带分数表示时间
 		// 绘制音符的函数
 		let draw = (t, x, y, sz, ang /* canvas 坐标系 */, alpha) => {
 			let w = 1089 * sz, h = [100, null, 200, 60][t - 1] * sz; // 根据音符类型确定尺寸
@@ -266,17 +290,50 @@ let renderer = {
 				let line_text = this.basic_getval_textevents(line.extended["textEvents"], t2);
 				ctx.fillText(line_text, this.x1 + (this.x2 - this.x1) * (x[i] + 675) / 1350, this.y2 - (this.y2 - this.y1) * (y[i] + 450) / 900);
 			}
-
 			// 计算音符已经经过的距离
 			let passed = this.getdis(line, t2); // 音符已经经过的距离
 			// 遍历判定线上的所有音符
 			for (let j = 0; j < (line.notes == undefined ? 0 : line.notes.length); j++) {
 				let note = note_extract(line.notes[j]); // 提取音符信息
+				
+				// 获取音符的开始和结束时间（小数形式）
+				let startTimeNum = note.startTime[0] + note.startTime[1] / note.startTime[2];
+				let endTimeNum = note.type == 2 ? (note.endTime[0] + note.endTime[1] / note.endTime[2]) : startTimeNum;
+				
+				// 获取当前时间的小数形式
+				let currentTimeNum = t2[0] + t2[1] / t2[2];
+				
 				// 如果音符已经结束，则增加连击并跳过
 				if (cmp2(note.endTime, t2)) {
 					if (note.isFake == 0) combo++; // 非假音符才增加连击
+					
+					// 检测音符结束时是否触发特效（对于hold音符）
+					if (enable_hit_effect && note.type == 2 && Math.abs(currentTimeNum - endTimeNum) < 0.05) {
+						// 计算特效显示位置
+						let notex = x[i] + Math.cos(f[i] * (Math.PI / 180)) * note.positionX;
+						let notey = y[i] - Math.sin(f[i] * (Math.PI / 180)) * note.positionX;
+						// 转换为canvas坐标
+						let tx = this.x1 + (this.x2 - this.x1) * ((notex + 675) / 1350);
+						let ty = this.y2 - (this.y2 - this.y1) * ((notey + 450) / 900);
+						// 创建特效
+						this.draw_hit_effect(currentTimeNum, tx, ty, note.type);
+					}
+					
 					continue;
 				}
+				
+				// 检测音符开始时是否触发特效（所有类型音符）
+				if (enable_hit_effect && Math.abs(currentTimeNum - startTimeNum) < 0.05) {
+					// 计算特效显示位置
+					let notex = x[i] + Math.cos(f[i] * (Math.PI / 180)) * note.positionX;
+					let notey = y[i] - Math.sin(f[i] * (Math.PI / 180)) * note.positionX;
+					// 转换为canvas坐标
+					let tx = this.x1 + (this.x2 - this.x1) * ((notex + 675) / 1350);
+					let ty = this.y2 - (this.y2 - this.y1) * ((notey + 450) / 900);
+					// 创建特效
+					this.draw_hit_effect(currentTimeNum, tx, ty, note.type);
+				}
+				
 				// 如果是反面音符，需要翻转坐标和角度
 				if (note.above != 1) f[i] += 180, note.positionX *= -1; // 绘制反面的音符
 				// 处理长按音符(Hold)
@@ -291,7 +348,7 @@ let renderer = {
 					}
 					let dis2 = this.cache[i][j].ed - passed; // 长按音符的结束距离
 					if (dis1 < 1700) {
-						notex1 = x[i] + Math.sin(f[i] * (Math.PI / 180)) * dis1 + Math.cos(f[i] * (Math.PI / 180)) * note.positionX;
+						notex1 = x[i] + Math.sin(f[i] * (Math.PI / 180)) * dis1 + Math.cos(f[i] * (Math.PI / 180)) * note.positionX;				
 						notey1 = y[i] + Math.cos(f[i] * (Math.PI / 180)) * dis1 - Math.sin(f[i] * (Math.PI / 180)) * note.positionX;
 						let notex2 = x[i] + Math.sin(f[i] * (Math.PI / 180)) * dis2 + Math.cos(f[i] * (Math.PI / 180)) * note.positionX;
 						let notey2 = y[i] + Math.cos(f[i] * (Math.PI / 180)) * dis2 - Math.sin(f[i] * (Math.PI / 180)) * note.positionX;
@@ -325,8 +382,14 @@ let renderer = {
 			}
 			// const e = ["moveXEvents", "moveYEvents", "rotateEvents", "alphaEvents", "speedEvents"];
 		}
+		// 渲染所有活跃特效
+		if (activeEffects && activeEffects.length > 0) {
+			this.updateEffects();
+			this.renderEffects();
+		}
+
 		// 如果需要显示连击UI
-		if (show_combo_UI) {
+		if (enable_combo_UI) {
 			let old_font = ctx.font; // 保存原字体设置
 			// 绘制连击数
 			ctx.font = "45px 思源黑体";
@@ -338,5 +401,36 @@ let renderer = {
 			ctx.fillText("Autoplay", 800, 80);
 			ctx.font = old_font; // 恢复原字体设置
 		}
+	},
+
+	// 更新特效状态
+	updateEffects: function() {
+		// 过滤并保留仍然活跃的特效
+		activeEffects = activeEffects.filter(effect => {
+			// 更新特效帧
+			effect.frameIndex++;
+			
+			// 检查特效是否完成
+			if (effect.frameIndex >= effect.frameCount) {
+				effect.isActive = false;
+				return false; // 从列表中移除
+			}
+			
+			return true; // 保留在列表中
+		});
+	},
+	
+	// 渲染所有特效
+	renderEffects: function() {
+		// 遍历所有活跃特效并绘制
+		activeEffects.forEach(effect => {
+			if (effect.frameIndex < effectImgs.length) {
+				const img = effectImgs[effect.frameIndex];
+				if (img && img.complete) { // 确保图片已加载
+					const size = effect.size;
+					ctx.drawImage(img, effect.x - size/2, effect.y - size/2, size, size);
+				}
+			}
+		});
 	}
 }

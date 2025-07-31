@@ -1,4 +1,4 @@
-// 最大公约数
+// 求得a b的最大公约数
 function gcd(a, b) {
 	return a % b == 0 ? b : gcd(b % a, a);
 }

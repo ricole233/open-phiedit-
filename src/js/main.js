@@ -8,11 +8,45 @@ const color = {
 	"evd": "#11fbbf96",
 	"select_rect": "#a2fffd60"
 }
+
+// 缓动选择器数据
+const easeOptions = [
+	{ value: "1", text: "线性", img: "1-linear.gif", desc: "匀速运动，无加速度变化" },
+	{ value: "2", text: "正弦缓出", img: "2-sin-out.gif", desc: "开始快速，逐渐减速至停止" },
+	{ value: "3", text: "正弦缓入", img: "3-sin-in.gif", desc: "开始缓慢，逐渐加速" },
+	{ value: "4", text: "二次缓出", img: "4-quad-out.gif", desc: "快速开始，平缓结束" },
+	{ value: "5", text: "二次缓入", img: "5-quad-in.gif", desc: "缓慢开始，快速结束" },
+	{ value: "6", text: "正弦缓入缓出", img: "6-sin-io.gif", desc: "慢-快-慢的平滑过渡" },
+	{ value: "7", text: "二次缓入缓出", img: "7-quad-io.gif", desc: "慢-快-慢，更明显的加减速" },
+	{ value: "8", text: "三次缓出", img: "8-cubic-out.gif", desc: "急速开始，逐渐减速" },
+	{ value: "9", text: "三次缓入", img: "9-cubic-in.gif", desc: "缓慢开始，急速加速" },
+	{ value: "10", text: "四次缓出", img: "10-quart-out.gif", desc: "极快开始，柔和减速" },
+	{ value: "11", text: "四次缓入", img: "11-quart-in.gif", desc: "极慢开始，强烈加速" },
+	{ value: "12", text: "三次缓入缓出", img: "12-cubic-io.gif", desc: "慢-急-慢的强烈对比" },
+	{ value: "13", text: "四次缓入缓出", img: "13-quart-io.gif", desc: "极慢-极快-极慢的变化" },
+	{ value: "14", text: "五次缓出", img: "14-quint-out.gif", desc: "瞬间开始，长时间减速" },
+	{ value: "15", text: "五次缓入", img: "15-quint-in.gif", desc: "长时间缓慢，瞬间加速" },
+	{ value: "16", text: "指数缓出", img: "16-expo-out.gif", desc: "极快开始，急剧减速至零" },
+	{ value: "17", text: "指数缓入", img: "17-expo-in.gif", desc: "从零开始，急剧加速" },
+	{ value: "18", text: "圆形缓出", img: "18-circ-out.gif", desc: "快速开始，圆弧式减速" },
+	{ value: "19", text: "圆形缓入", img: "19-circ-in.gif", desc: "圆弧式启动，快速结束" },
+	{ value: "20", text: "回弹缓出", img: "20-back-out.gif", desc: "超越目标后回弹" },
+	{ value: "21", text: "回弹缓入", img: "21-back-in.gif", desc: "先向后再向前运动" },
+	{ value: "22", text: "圆形缓入", img: "22-circ-in.gif", desc: "圆弧式启动，快速结束" },
+	{ value: "23", text: "回弹缓入缓出", img: "23-back-io.gif", desc: "两端都有回弹效果" },
+	{ value: "24", text: "弹性缓出", img: "24-elastic-out.gif", desc: "到达目标后弹性振荡" },
+	{ value: "25", text: "弹性缓入", img: "25-elastic-in.gif", desc: "开始时弹性振荡" },
+	{ value: "26", text: "弹跳缓出", img: "26-bounce-out.gif", desc: "到达目标后多次弹跳" },
+	{ value: "27", text: "弹跳缓入", img: "27-bounce-in.gif", desc: "开始时多次弹跳" },
+	{ value: "28", text: "弹跳缓入缓出", img: "28-bounce-io.gif", desc: "两端都有弹跳效果" }
+];
+
 // 全局变量 / 数据管理
 // ============================================================================================
 window.$ = (e) => {
 	return document.getElementById(e);
 }
+window.easeOptions = easeOptions;
 var mode = "computer";
 window.onbeforeunload = () => { return 1 };
 /*
@@ -672,8 +706,14 @@ var sidebarcontrol = {
 			show(2);
 			if (evs_layer == "ex") var e = now_line.extended[selection_ev[0][1]][selection_ev[0][0]];
 			else var e = evs[evs_layer][selection_ev[0][1]][selection_ev[0][0]];
-			if (selection_ev[0][1] == "speedEvents") $("edit2-ease").value = 1;
-			else $("edit2-ease").value = e.easingType;
+			let easeValue = selection_ev[0][1] == "speedEvents" ? "1" : e.easingType;
+			$("edit2-ease").value = easeValue;
+			
+			// 更新缓动选择器UI
+			const selectedEase = easeOptions.find(opt => opt.value === String(easeValue)) || easeOptions[0];
+			$("edit2-ease-selected-img").src = `./src/img/math/${selectedEase.img}`;
+			$("edit2-ease-selected-text").textContent = selectedEase.text;
+			
 			$("event-name").innerText = selection_ev[0][1];
 			$("edit2-time").value = e.startTime[0] + ":" + e.startTime[1] + "/" + e.startTime[2];
 			$("edit2-time2").value = e.endTime[0] + ":" + e.endTime[1] + "/" + e.endTime[2];

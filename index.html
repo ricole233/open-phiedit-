@@ -15,11 +15,6 @@
 <body>
 	<div id="mainUI">
 		<audio id="music-player"></audio>
-		<!-- 加载反馈音效 -->
-		<!-- <audio id="audio-tap" src="./src/audios/notes/tap.wav" preload="auto"></audio>
-		<audio id="audio-drag" src="./src/audios/notes/drag.wav" preload="auto"></audio>
-		<audio id="audio-flick" src="./src/audios/notes/flick.wav" preload="auto"></audio>
-		<audio id="audio-hold" src="./src/audios/notes/hold.wav" preload="auto"></audio> -->
 		<div id="downloading">
 			保存文件中......
 		</div>
@@ -100,36 +95,16 @@
 			<div style="width: 25%; display:none" id="edit2">
 				<h3>事件编辑</h3>
 				<p id="event-name"></p>
-				缓动类型：<select id="edit2-ease">
-					<option value="1">1 linear</option>
-					<option value="2">2 sin out</option>
-					<option value="3">3 sin in</option>
-					<option value="4">4 quad out</option>
-					<option value="5">5 quad in</option>
-					<option value="6">6 sin io</option>
-					<option value="7">7 quad io</option>
-					<option value="8">8 cubic out</option>
-					<option value="9">9 cubic in</option>
-					<option value="10">10 quart out</option>
-					<option value="11">11 quart in</option>
-					<option value="12">12 cubic io</option>
-					<option value="13">13 quart io</option>
-					<option value="14">14 quint out</option>
-					<option value="15">15 quint in</option>
-					<option value="16">16 expo out</option>
-					<option value="17">17 expo in</option>
-					<option value="18">18 circ out</option>
-					<option value="19">19 circ in</option>
-					<option value="20">20 back out</option>
-					<option value="21">21 back in</option>
-					<option value="22">22 circ in</option>
-					<option value="23">23 back io</option>
-					<option value="24">24 elastic out</option>
-					<option value="25">25 elastic in</option>
-					<option value="26">26 bounce out</option>
-					<option value="27">27 bounce in</option>
-					<option value="28">28 bounce io</option>
-				</select>
+				缓动类型：
+				<div class="ease-container">
+					<div id="edit2-ease-selected" class="ease-selected">
+						<img id="edit2-ease-selected-img" src="./src/img/math/1-linear.gif" class="ease-selected-icon">
+						<span id="edit2-ease-selected-text">线性</span>
+						<span>▼</span>
+					</div>
+					<input type="hidden" id="edit2-ease" value="1">
+					<div id="edit2-ease-dropdown" class="ease-dropdown"></div>
+				</div>
 				<br>
 				起始时间：<input id="edit2-time"><br>
 				结束时间：<input id="edit2-time2"><br>
@@ -154,36 +129,16 @@
 				</select><br>
 				数值下界：<input id="edit4-v1"><br>
 				数值上界：<input id="edit4-v2"><br>
-				缓动类型：<select id="edit4-ease">
-					<option value="1">1 linear</option>
-					<option value="2">2 sin out</option>
-					<option value="3">3 sin in</option>
-					<option value="4">4 quad out</option>
-					<option value="5">5 quad in</option>
-					<option value="6">6 sin io</option>
-					<option value="7">7 quad io</option>
-					<option value="8">8 cubic out</option>
-					<option value="9">9 cubic in</option>
-					<option value="10">10 quart out</option>
-					<option value="11">11 quart in</option>
-					<option value="12">12 cubic io</option>
-					<option value="13">13 quart io</option>
-					<option value="14">14 quint out</option>
-					<option value="15">15 quint in</option>
-					<option value="16">16 expo out</option>
-					<option value="17">17 expo in</option>
-					<option value="18">18 circ out</option>
-					<option value="19">19 circ in</option>
-					<option value="20">20 back out</option>
-					<option value="21">21 back in</option>
-					<option value="22">22 circ in</option>
-					<option value="23">23 back io</option>
-					<option value="24">24 elastic out</option>
-					<option value="25">25 elastic in</option>
-					<option value="26">26 bounce out</option>
-					<option value="27">27 bounce in</option>
-					<option value="28">28 bounce io</option>
-				</select>
+				缓动类型：
+				<div class="ease-container">
+					<div id="edit4-ease-selected" class="ease-selected">
+						<img id="edit4-ease-selected-img" src="./src/img/math/1-linear.gif" class="ease-selected-icon">
+						<span id="edit4-ease-selected-text">线性</span>
+						<span>▼</span>
+					</div>
+					<input type="hidden" id="edit4-ease" value="1">
+					<div id="edit4-ease-dropdown" class="ease-dropdown"></div>
+				</div>
 				<br>
 				修改方式：<select id="edit4-op">
 					<option value="add">增加此值</option>
@@ -248,36 +203,16 @@
 				<option value="4" selected>drag</option>
 			</select><br>
 			密度：<input id="fillnotes-density" value="0:1/4"><br>
-			曲线类型：<select id="fillnotes-ease">
-				<option value="1">1 linear</option>
-				<option value="2">2 sin out</option>
-				<option value="3">3 sin in</option>
-				<option value="4">4 quad out</option>
-				<option value="5">5 quad in</option>
-				<option value="6">6 sin io</option>
-				<option value="7">7 quad io</option>
-				<option value="8">8 cubic out</option>
-				<option value="9">9 cubic in</option>
-				<option value="10">10 quart out</option>
-				<option value="11">11 quart in</option>
-				<option value="12">12 cubic io</option>
-				<option value="13">13 quart io</option>
-				<option value="14">14 quint out</option>
-				<option value="15">15 quint in</option>
-				<option value="16">16 expo out</option>
-				<option value="17">17 expo in</option>
-				<option value="18">18 circ out</option>
-				<option value="19">19 circ in</option>
-				<option value="20">20 back out</option>
-				<option value="21">21 back in</option>
-				<option value="22">22 circ in</option>
-				<option value="23">23 back io</option>
-				<option value="24">24 elastic out</option>
-				<option value="25">25 elastic in</option>
-				<option value="26">26 bounce out</option>
-				<option value="27">27 bounce in</option>
-				<option value="28">28 bounce io</option>
-			</select><br>
+			曲线类型：
+			<div class="ease-container">
+				<div id="fillnotes-ease-selected" class="ease-selected">
+					<img id="fillnotes-ease-selected-img" src="./src/img/math/1-linear.gif" class="ease-selected-icon">
+					<span id="fillnotes-ease-selected-text">线性</span>
+					<span>▼</span>
+				</div>
+				<input type="hidden" id="fillnotes-ease" value="1">
+				<div id="fillnotes-ease-dropdown" class="ease-dropdown"></div>
+			</div><br>
 			<button id="fillnotes">确认</button>
 		</div>
 	</div>
@@ -656,6 +591,94 @@
 			border-bottom: 1px solid #3A3A3A;
 			padding-bottom: 5px;
 		}
+
+		/* 缓动效果选择器 */
+		.ease-selector {
+			display: flex;
+			flex-wrap: wrap;
+			max-height: 300px;
+			overflow-y: auto;
+			margin-top: 5px;
+			border: 1px solid #4A4A4A;
+			border-radius: 3px;
+			background: #252525;
+			padding: 5px;
+		}
+
+		.ease-selected {
+			border: 1px solid #4A4A4A;
+			padding: 5px 10px;
+			background: #3A3A3A;
+			border-radius: 3px;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			color: #E6E6E6;
+		}
+
+		.ease-dropdown {
+			position: absolute;
+			background: #2D2D2D;
+			z-index: 1000;
+			border: 1px solid #4A4A4A;
+			border-radius: 3px;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+			padding: 5px;
+			display: none;
+		}
+
+		.ease-item {
+			display: flex;
+			align-items: center;
+			padding: 8px;
+			cursor: pointer;
+			border-radius: 3px;
+			transition: all 0.15s ease;
+		}
+
+		.ease-item:hover {
+			background-color: #3F3F3F;
+		}
+
+		.ease-item.active {
+			border: 1px solid #2D96FF;
+			background-color: #2A2A2A;
+		}
+
+		.ease-item img {
+			width: 100px;
+			height: 60px;
+			margin-right: 10px;
+			object-fit: contain;
+		}
+
+		.ease-item-text {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.ease-item-name {
+			font-weight: bold;
+			color: #E6E6E6;
+		}
+
+		.ease-item-desc {
+			font-size: 0.8em;
+			color: #B8B8B8;
+		}
+
+		.ease-selected-icon {
+			width: 24px;
+			height: 24px;
+			margin-right: 10px;
+			object-fit: contain;
+		}
+
+		.ease-container {
+			position: relative;
+			display: inline-block;
+		}
 	</style>
 	<script src="./src/js/math.js"></script>
 	<script src="./src/js/note.js"></script>
@@ -706,6 +729,88 @@
 					updateActiveNoteBtn(window.mode);
 				}
 			}, 50);
+		});
+
+		// 初始化缓动效果选择器
+		document.addEventListener('DOMContentLoaded', function() {
+			// 初始化缓动选择器的下拉菜单
+			function initEaseDropdown(dropdownId, selectedId, imgId, textId, hiddenInputId) {
+				const dropdown = document.getElementById(dropdownId);
+				const selected = document.getElementById(selectedId);
+				const img = document.getElementById(imgId);
+				const text = document.getElementById(textId);
+				const hiddenInput = document.getElementById(hiddenInputId);
+				
+				if (!dropdown || !selected || !img || !text || !hiddenInput) return;
+				
+				// 生成下拉菜单内容
+				dropdown.innerHTML = '';
+				window.easeOptions.forEach(option => {
+					const item = document.createElement('div');
+					item.className = 'ease-item';
+					item.setAttribute('data-value', option.value);
+					item.innerHTML = `
+						<img src="./src/img/math/${option.img}" alt="${option.text}">
+						<div class="ease-item-text">
+							<div class="ease-item-name">${option.text}</div>
+							<div class="ease-item-desc">${option.desc}</div>
+						</div>
+					`;
+					
+					// 点击选项时的处理
+					item.addEventListener('click', function() {
+						// 更新隐藏输入值
+						hiddenInput.value = option.value;
+						
+						// 更新显示
+						img.src = `./src/img/math/${option.img}`;
+						text.textContent = option.text;
+						
+						// 关闭下拉菜单
+						dropdown.style.display = 'none';
+						
+						// 触发change事件
+						const event = new Event('change');
+						hiddenInput.dispatchEvent(event);
+					});
+					
+					dropdown.appendChild(item);
+				});
+				
+				// 点击选择器显示/隐藏下拉菜单
+				selected.addEventListener('click', function(e) {
+					e.stopPropagation();
+					const isVisible = dropdown.style.display === 'block';
+					
+					// 隐藏所有下拉菜单
+					document.querySelectorAll('.ease-dropdown').forEach(d => {
+						d.style.display = 'none';
+					});
+					
+					// 切换当前下拉菜单的可见性
+					dropdown.style.display = isVisible ? 'none' : 'block';
+					
+					// 设置位置，相对于容器定位
+					dropdown.style.top = '100%';
+					dropdown.style.left = '0';
+					dropdown.style.maxHeight = '300px';
+					dropdown.style.width = '350px';
+					dropdown.style.overflowY = 'auto';
+					dropdown.style.zIndex = '1001';
+				});
+			}
+			
+			// 初始化所有缓动选择器
+			initEaseDropdown('edit2-ease-dropdown', 'edit2-ease-selected', 'edit2-ease-selected-img', 'edit2-ease-selected-text', 'edit2-ease');
+			initEaseDropdown('edit4-ease-dropdown', 'edit4-ease-selected', 'edit4-ease-selected-img', 'edit4-ease-selected-text', 'edit4-ease');
+			initEaseDropdown('fillnotes-ease-dropdown', 'fillnotes-ease-selected', 'fillnotes-ease-selected-img', 'fillnotes-ease-selected-text', 'fillnotes-ease');
+			
+			// 点击文档其他地方时关闭所有下拉菜单
+			document.addEventListener('click', function() {
+				document.querySelectorAll('.ease-dropdown').forEach(dropdown => {
+					dropdown.style.display = 'none';
+				});
+			});
 		});
 	</script>
 

@@ -276,14 +276,75 @@ let renderer = {
 			let line_color = (line.extended["colorEvents"] == undefined ? [255, 255, 255] : this.basic_getval_colorevents(line.extended["colorEvents"], t2));
 			if (line.extended["textEvents"] == undefined) {
 				// 绘制判定线
-				ctx.lineWidth = 5 * (line.extended["scaleYEvents"] == undefined ? 1 : this.basic_getval(line.extended["scaleYEvents"], t2));
-				let line_length = 2000 * (line.extended["scaleXEvents"] == undefined ? 1 : this.basic_getval(line.extended["scaleXEvents"], t2));
-				ctx.strokeStyle = "rgba(" + line_color[0] + "," + line_color[1] + "," + line_color[2] + "," + a / 255 + ")";
+				let scaleY = (line.extended["scaleYEvents"] == undefined ? 1 : this.basic_getval(line.extended["scaleYEvents"], t2));
+				let scaleX = (line.extended["scaleXEvents"] == undefined ? 1 : this.basic_getval(line.extended["scaleXEvents"], t2));
+				
+				// 确保最小线宽和长度
+				ctx.lineWidth = Math.max(3, 5 * scaleY);
+				let line_length = Math.max(200, 800 * scaleX); // 减小默认长度，确保最小长度
+				
+				// 确保透明度可见
+				let alpha = Math.max(0.3, Math.min(1.0, a / 255));
+				
+				// 确保颜色可见，如果颜色太暗则使用白色
+				let r = line_color[0] || 255;
+				let g = line_color[1] || 255; 
+				let b = line_color[2] || 255;
+				if (r + g + b < 100) { // 如果颜色太暗
+					r = g = b = 255; // 使用白色
+				}
+				
+				ctx.strokeStyle = "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+				
+				// 计算判定线的起点和终点
+				let cos_f = Math.cos(f[i] * Math.PI / 180);
+				let sin_f = Math.sin(f[i] * Math.PI / 180);
+				
+				let startX = this.x1 + (x[i] - line_length * cos_f + 675) / 1350 * (this.x2 - this.x1);
+				let startY = this.y2 - (y[i] + line_length * sin_f + 450) / 900 * (this.y2 - this.y1);
+				let endX = this.x1 + (x[i] + line_length * cos_f + 675) / 1350 * (this.x2 - this.x1);
+				let endY = this.y2 - (y[i] - line_length * sin_f + 450) / 900 * (this.y2 - this.y1);
+				
 				ctx.beginPath();
-				ctx.moveTo(this.x1 + (x[i] - line_length * Math.cos(f[i] * Math.PI / 180) + 675) / 1350 * (this.x2 - this.x1), this.y2 - (y[i] + line_length * Math.sin(f[i] * Math.PI / 180) + 450) / 900 * (this.y2 - this.y1));
-				ctx.lineTo(this.x1 + (x[i] + line_length * Math.cos(f[i] * Math.PI / 180) + 675) / 1350 * (this.x2 - this.x1), this.y2 - (y[i] - line_length * Math.sin(f[i] * Math.PI / 180) + 450) / 900 * (this.y2 - this.y1));
-				ctx.closePath();
+				ctx.moveTo(startX, startY);
+				ctx.lineTo(endX, endY);
 				ctx.stroke();
+				
+								// 绘制判定线编号（跟随判定线朝向）
+				let anchorX = this.x1 + (this.x2 - this.x1) * (x[i] + 675) / 1350;
+				let anchorY = this.y2 - (this.y2 - this.y1) * (y[i] + 450) / 900;
+				
+				// 保存当前canvas状态
+				ctx.save();
+				
+				// 移动到锚点并应用旋转
+				ctx.translate(anchorX, anchorY);
+				ctx.rotate(f[i] * Math.PI / 180);
+				
+				// 设置编号文字样式
+				ctx.font = "bold 18px Arial";
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				
+				// 创建带箭头的编号文本
+				let labelText = `<${i}>`;
+				
+				// 测量文本宽度以确定背景大小
+				let textMetrics = ctx.measureText(labelText);
+				let textWidth = textMetrics.width;
+				let textHeight = 20;
+				
+				// 绘制编号背景矩形（半透明黑色）
+				ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+				ctx.fillRect(-textWidth/2 - 4, -textHeight/2 - 2, textWidth + 8, textHeight + 4);
+				
+				
+				// 绘制编号文字
+				ctx.fillStyle = "#FFFFFF";
+				ctx.fillText(labelText, 0, 0);
+				
+				// 恢复canvas状态
+				ctx.restore();
 			} else {
 				ctx.fillStyle = "rgba(" + line_color[0] + "," + line_color[1] + "," + line_color[2] + "," + a / 255 + ")"; // 文字颜色
 				ctx.textAlign = "center";

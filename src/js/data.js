@@ -2,8 +2,8 @@ window.$ = (e) => {
 	return document.getElementById(e);
 }
 
-
-
+// 创建空数据
+// ============================================================================================
 function new_empty_data() {
 	return {
 		"BPMList": [
@@ -32,6 +32,8 @@ function new_empty_data() {
 		"multiScale": 1.0
 	}
 }
+// 创建空判定线
+// ============================================================================================
 function new_judge_line() {
 	return {
 		"Group": 0,
@@ -197,6 +199,7 @@ function new_judge_line() {
 
 // 格式转换
 // ============================================================================================
+// 官方格式转 RPE 格式
 function official_to_rpe(off) {
 	console.log(off);
 	let res = new_empty_data();
@@ -344,6 +347,7 @@ function official_to_rpe(off) {
 	}
 	return res;
 }
+// 解析 小文件QUE到RPE
 function pec_to_rpe(pec) {
 	let res = new_empty_data();
 	console.log(pec, res);
@@ -592,6 +596,7 @@ async function FileDownload(content, filename) {
 	eleLink.click();
 	document.body.removeChild(eleLink);
 }
+// 修复数据
 function fix() {
 	for (let i = 0; i < all_data.judgeLineList.length; i++) {
 		let line = all_data.judgeLineList[i];
@@ -610,6 +615,7 @@ function fix() {
 		}
 	}
 }
+// 解析 大文件JSON
 function large_json_parse(e) {
 	if (e.str == undefined) return large_json_parse({ str: e, i: 0 });
 	while (e.str[e.i] == 32 || e.str[e.i] == 9 || e.str[e.i] == 10 || e.str[e.i] == 13) e.i++;
@@ -660,6 +666,7 @@ function large_json_parse(e) {
 		return parseFloat(numStr);
 	}
 }
+// 将字符串转换为 Uint8Array
 function toa(s) {
 	let a = new Uint8Array(s.length);
 	for (let i = 0; i < s.length; i++) {
@@ -667,7 +674,7 @@ function toa(s) {
 	}
 	return a
 }
-
+// 加载文件
 $("m-load").addEventListener('click', () => {
 	var fileInput = document.createElement('input');
 	fileInput.type = 'file';
@@ -819,6 +826,7 @@ $("m-load").addEventListener('click', () => {
 		}
 	};
 });
+// 保存文件（json 格式）
 $("m-save").addEventListener('click', () => {
 	if (in_download == 0) {
 		in_download = 1;
@@ -856,6 +864,7 @@ $("m-save").addEventListener('click', () => {
 		}, 0);
 	}
 });
+// 保存文件（que 格式）
 $("m-save2").addEventListener('click', () => {
 	if (in_download == 0) {
 		in_download = 1;

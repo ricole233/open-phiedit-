@@ -1,6 +1,7 @@
 # Open PhiEdit (Fork)
 
-这是 [@cbs001](https://github.com/cbs001) 的 [open-phiedit](https://github.com/cbs001/open-phiedit) 项目的改进版本。主要增强了用户界面体验，添加了更直观的缓动效果选择器和其他反馈元素。
+这是 [@cbs001](https://github.com/cbs001) 的 [open-phiedit](https://github.com/cbs001/open-phiedit) 项目的FORK，看个乐就行了，尝试加了点UI和反馈（很喜欢ae的ui，很想做成AE的UI但是不会），内核没动
+# Open PhiEdit fork
 
 > 🌟 如果你喜欢这个项目，别忘了给原作者的 [open-phiedit](https://github.com/cbs001/open-phiedit) 点个Star！
 

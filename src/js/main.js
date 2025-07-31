@@ -140,11 +140,11 @@ var notecontrol = {
 	/*
 	本模块不使用 nrr 变量，需要手动传入渲染的矩形范围，这样更灵活
 	*/
-	add: function (type, time, x, auto_update = 1) { // 注意：调用此函数会自动更新渲染缓存，除非更改参数 auto_update
+	add: function (type, time, x, auto_update = 1, useHistory = true) { // 注意：调用此函数会自动更新渲染缓存，除非更改参数 auto_update
 		/*
 		type: 1tap 2hold 3flick 4drag
 		*/
-		notes.push(note_compress({
+		const noteData = {
 			"above": 1,
 			"alpha": 255,
 			"endTime": time,
@@ -156,14 +156,23 @@ var notecontrol = {
 			"type": type,
 			"visibleTime": 9999999.0,
 			"yOffset": 0.0
-		}));
-		if (auto_update) this.update();
+		};
+		
+		if (useHistory && historyManager) {
+			// 使用历史记录系统
+			const command = HistoryUtils.createAddNoteCommand(noteData, lineid_select);
+			historyManager.executeCommand(command);
+		} else {
+			// 直接添加（用于内部调用和历史记录回放）
+			notes.push(note_compress(noteData));
+			if (auto_update) this.update();
+		}
 	},
-	addhold: function (st, ed, x, auto_update = 1) { // 注意：调用此函数会自动更新渲染缓存，除非更改参数 auto_update
+	addhold: function (st, ed, x, auto_update = 1, useHistory = true) { // 注意：调用此函数会自动更新渲染缓存，除非更改参数 auto_update
 		/*
 		type: 1tap 2hold 3flick 4drag
 		*/
-		notes.push(note_compress({
+		const noteData = {
 			"above": 1,
 			"alpha": 255,
 			"endTime": ed,
@@ -175,8 +184,17 @@ var notecontrol = {
 			"type": 2,
 			"visibleTime": 9999999.0,
 			"yOffset": 0.0
-		}));
-		if (auto_update) this.update();
+		};
+		
+		if (useHistory && historyManager) {
+			// 使用历史记录系统
+			const command = HistoryUtils.createAddNoteCommand(noteData, lineid_select);
+			historyManager.executeCommand(command);
+		} else {
+			// 直接添加（用于内部调用和历史记录回放）
+			notes.push(note_compress(noteData));
+			if (auto_update) this.update();
+		}
 	},
 	/*
 	音符区域相对坐标：1350*900（rpe 坐标系），(0,0) 为正中心，向上向右为正，仅在渲染时转换为绝对坐标
@@ -480,28 +498,55 @@ var sidebarcontrol = {
 		$("edit-x").addEventListener("change", () => {
 			if (selection.length > 0) {
 				let tmp = Number($("edit-x").value);
-				if (isNaN(tmp)) $("edit-x").value = notes[selection][0].positionX;
-				else {
-					for (let i = 0; i < selection.length; i++) {
-						let note = note_extract(notes[selection[i]]);
-						note.positionX = tmp;
-						notes[selection[i]] = note_compress(note);
-					}
-					notecontrol.update();
+				if (isNaN(tmp)) {
+					$("edit-x").value = note_extract(notes[selection[0]]).positionX;
+					return;
 				}
+				
+				// 创建复合命令用于批量修改属性
+				const compositeCommand = HistoryUtils.createCompositeCommand(
+					selection.length === 1 ? "修改音符X坐标" : `批量修改 ${selection.length} 个音符X坐标`
+				);
+				
+				for (let i = 0; i < selection.length; i++) {
+					const oldData = note_extract(notes[selection[i]]);
+					const newData = {...oldData};
+					newData.positionX = tmp;
+					
+					const modifyCommand = HistoryUtils.createModifyNoteCommand(
+						selection[i], oldData, newData, lineid_select
+					);
+					compositeCommand.addCommand(modifyCommand);
+				}
+				
+				historyManager.executeCommand(compositeCommand);
 			}
 		});
 		$("edit-y").addEventListener("change", () => {
 			if (selection.length > 0) {
 				let tmp = Number($("edit-y").value);
-				if (isNaN(tmp)) $("edit-y").value = notes[selection][0].yOffset;
-				else {
-					for (let i = 0; i < selection.length; i++) {
-						let note = note_extract(notes[selection[i]]);
-						note.yOffset = tmp;
-						notes[selection[i]] = note_compress(note);
-					}
+				if (isNaN(tmp)) {
+					$("edit-y").value = note_extract(notes[selection[0]]).yOffset;
+					return;
 				}
+				
+				// 创建复合命令用于批量修改属性
+				const compositeCommand = HistoryUtils.createCompositeCommand(
+					selection.length === 1 ? "修改音符Y偏移" : `批量修改 ${selection.length} 个音符Y偏移`
+				);
+				
+				for (let i = 0; i < selection.length; i++) {
+					const oldData = note_extract(notes[selection[i]]);
+					const newData = {...oldData};
+					newData.yOffset = tmp;
+					
+					const modifyCommand = HistoryUtils.createModifyNoteCommand(
+						selection[i], oldData, newData, lineid_select
+					);
+					compositeCommand.addCommand(modifyCommand);
+				}
+				
+				historyManager.executeCommand(compositeCommand);
 			}
 		});
 		$("edit-time").addEventListener("change", () => {
@@ -1081,29 +1126,100 @@ function put_qwer(key) { // 识别 q,w,e,r 键；这里专门搞一个函数出�
 	}
 }
 function delete_selection() {
+	if (selection.length === 0 && selection_ev.length === 0) return;
+	
+	// 创建复合命令来处理批量删除
+	const compositeCommand = HistoryUtils.createCompositeCommand(
+		selection.length > 0 ? `删除 ${selection.length} 个音符` : `删除 ${selection_ev.length} 个事件`
+	);
+	
 	// 删除音符：
 	if (selection.length > 0) {
-		selection.sort((a, b) => a - b);
-		for (let i = 0; i < selection.length; i++) {
-			notes.splice(selection[i] - i, 1);
+		// 先排序，从后往前删除以保持索引正确
+		const sortedSelection = [...selection].sort((a, b) => b - a);
+		
+		for (let noteIndex of sortedSelection) {
+			if (noteIndex >= 0 && noteIndex < notes.length) {
+				const oldData = note_extract(notes[noteIndex]);
+				const deleteCommand = HistoryUtils.createDeleteNoteCommand(noteIndex, lineid_select);
+				compositeCommand.addCommand(deleteCommand);
+			}
 		}
 		selection = [];
-		notecontrol.update();
 	}
+	
 	// 删除事件：
-	for (let i = 0; i < selection_ev.length; i++) {
-		(evs_layer == "ex" ? now_line.extended : evs[evs_layer])[selection_ev[i][1]].splice(selection_ev[i][0], 1);
-		for (let j = i + 1; j < selection_ev.length; j++) {
-			if (selection_ev[i][1] == selection_ev[j][1]) selection_ev[j][0]--;
+	if (selection_ev.length > 0) {
+		// 创建事件删除的快照命令
+		const beforeState = HistoryUtils.deepClone({
+			events: evs_layer === "ex" ? now_line.extended : evs[evs_layer],
+			selection_ev: [...selection_ev]
+		});
+		
+		// 执行删除
+		for (let i = 0; i < selection_ev.length; i++) {
+			(evs_layer == "ex" ? now_line.extended : evs[evs_layer])[selection_ev[i][1]].splice(selection_ev[i][0], 1);
+			for (let j = i + 1; j < selection_ev.length; j++) {
+				if (selection_ev[i][1] == selection_ev[j][1]) selection_ev[j][0]--;
+			}
 		}
+		
+		const afterState = HistoryUtils.deepClone({
+			events: evs_layer === "ex" ? now_line.extended : evs[evs_layer],
+			selection_ev: []
+		});
+		
+		const eventDeleteCommand = new Commands.SnapshotCommand(
+			`删除 ${selection_ev.length} 个事件`,
+			beforeState,
+			afterState,
+			(state) => {
+				if (evs_layer === "ex") {
+					now_line.extended = state.events;
+				} else {
+					evs[evs_layer] = state.events;
+				}
+				selection_ev = state.selection_ev;
+			}
+		);
+		
+		compositeCommand.addCommand(eventDeleteCommand);
+		selection_ev = [];
 	}
-	selection_ev = [];
+	
+	// 执行复合命令
+	if (compositeCommand.commands.length > 0) {
+		historyManager.executeCommand(compositeCommand);
+	}
+	
+	// 更新UI
+	sidebarcontrol.edit_update();
 }
 document.addEventListener('keydown', function (event) {
 	if (event.key == "Control") control_down = 1;
-	if (mousedata.in == 0) return;
+	
 	let key = event.key.toLowerCase();
 	console.log("按键 " + key + " " + event.keyCode);
+	
+	// 全局快捷键（不受 mousedata.in 限制）
+	if (key == "z" && event.ctrlKey && !event.shiftKey) {
+		event.preventDefault();
+		historyManager.undo();
+		return;
+	}
+	else if ((key == "y" && event.ctrlKey) || (key == "z" && event.ctrlKey && event.shiftKey)) {
+		event.preventDefault();
+		historyManager.redo();
+		return;
+	}
+	else if (key == "h" && event.ctrlKey && event.shiftKey) {
+		event.preventDefault();
+		HistoryPanelUtils.toggle();
+		return;
+	}
+	
+	if (mousedata.in == 0) return;
+	
 	if (key == "q" || key == "e" || key == "w" || key == "r") put_qwer(key);
 	else if (key == "delete") delete_selection();
 	else if (key == " ") playercontrol.change();
@@ -1118,6 +1234,74 @@ $("mobile-phone-play").addEventListener("click", () => { // 等价于按下空�
 	if (playing == 1) $("mobile-phone-play").src = "./src/img/icon2.svg";
 	else $("mobile-phone-play").src = "./src/img/icon1.svg";
 })
+
+// 历史记录按钮事件监听器（菜单栏）
+if ($("m-undo")) {
+	$("m-undo").addEventListener("click", () => {
+		historyManager.undo();
+	});
+}
+if ($("m-redo")) {
+	$("m-redo").addEventListener("click", () => {
+		historyManager.redo();
+	});
+}
+
+// 工具栏历史记录按钮事件监听器
+if ($("toolbar-undo")) {
+	$("toolbar-undo").addEventListener("click", () => {
+		historyManager.undo();
+	});
+}
+if ($("toolbar-redo")) {
+	$("toolbar-redo").addEventListener("click", () => {
+		historyManager.redo();
+	});
+}
+
+// 历史记录面板切换按钮
+if ($("toolbar-history-panel")) {
+	$("toolbar-history-panel").addEventListener("click", () => {
+		HistoryPanelUtils.toggle();
+	});
+}
+
+// 监听历史记录状态变化，更新所有UI
+eventBus.on(EventTypes.HISTORY_CHANGED, (state) => {
+	// 更新菜单栏按钮
+	const menuUndoBtn = $("m-undo");
+	const menuRedoBtn = $("m-redo");
+	
+	if (menuUndoBtn) {
+		menuUndoBtn.style.opacity = state.canUndo ? "1" : "0.5";
+		menuUndoBtn.style.pointerEvents = state.canUndo ? "auto" : "none";
+		menuUndoBtn.title = state.canUndo ? `撤销: ${state.undoDescription}` : "无可撤销操作";
+	}
+	
+	if (menuRedoBtn) {
+		menuRedoBtn.style.opacity = state.canRedo ? "1" : "0.5";
+		menuRedoBtn.style.pointerEvents = state.canRedo ? "auto" : "none";
+		menuRedoBtn.title = state.canRedo ? `重做: ${state.redoDescription}` : "无可重做操作";
+	}
+	
+	// 更新工具栏按钮
+	const toolbarUndoBtn = $("toolbar-undo");
+	const toolbarRedoBtn = $("toolbar-redo");
+	
+	if (toolbarUndoBtn) {
+		toolbarUndoBtn.style.opacity = state.canUndo ? "1" : "0.5";
+		toolbarUndoBtn.style.pointerEvents = state.canUndo ? "auto" : "none";
+		toolbarUndoBtn.title = state.canUndo ? `撤销: ${state.undoDescription}` : "无可撤销操作";
+		toolbarUndoBtn.disabled = !state.canUndo;
+	}
+	
+	if (toolbarRedoBtn) {
+		toolbarRedoBtn.style.opacity = state.canRedo ? "1" : "0.5";
+		toolbarRedoBtn.style.pointerEvents = state.canRedo ? "auto" : "none";
+		toolbarRedoBtn.title = state.canRedo ? `重做: ${state.redoDescription}` : "无可重做操作";
+		toolbarRedoBtn.disabled = !state.canRedo;
+	}
+});
 document.addEventListener('keyup', function (event) {
 	if (event.key == "Control") control_down = 0;
 });
@@ -1143,7 +1327,9 @@ $("eventlayer-del").addEventListener("click", () => { // 删除事件层级
 	}
 })
 $("m-addline").addEventListener('click', () => {
-	all_data.judgeLineList.push(new_judge_line());
+	const command = HistoryUtils.createAddJudgeLineCommand();
+	historyManager.executeCommand(command);
+	
 	Swal.fire({
 		toast: true,
 		position: 'top-end',
@@ -1441,15 +1627,49 @@ $("fillnotes").addEventListener('click', () => {
 	let t = parseInt($("fillnotes-t").value);
 	let ease = $("fillnotes-ease").value;
 
+	// 创建复合命令用于批量添加音符
+	const compositeCommand = HistoryUtils.createCompositeCommand("曲线填充音符");
+	
 	if ($("fillnotes-flag").checked) { // 包含边界？
-		for (let i = st; cmp(i, ed); i = add(i, density))
-			notecontrol.add(t, i, x == x2 ? x : x + (x2 - x) * calcease(ease, div(sub(i, st), sub(ed, st))), 0);
+		for (let i = st; cmp(i, ed); i = add(i, density)) {
+			const noteData = {
+				"above": 1,
+				"alpha": 255,
+				"endTime": i,
+				"isFake": 0,
+				"positionX": x == x2 ? x : x + (x2 - x) * calcease(ease, div(sub(i, st), sub(ed, st))),
+				"size": 1.0,
+				"speed": 1.0,
+				"startTime": i,
+				"type": t,
+				"visibleTime": 9999999.0,
+				"yOffset": 0.0
+			};
+			compositeCommand.addCommand(HistoryUtils.createAddNoteCommand(noteData, lineid_select));
+		}
 	} else {
-		for (let i = add(st, density); cmp2(i, ed); i = add(i, density))
-			notecontrol.add(t, i, x == x2 ? x : x + (x2 - x) * calcease(ease, div(sub(i, st), sub(ed, st))), 0);
+		for (let i = add(st, density); cmp2(i, ed); i = add(i, density)) {
+			const noteData = {
+				"above": 1,
+				"alpha": 255,
+				"endTime": i,
+				"isFake": 0,
+				"positionX": x == x2 ? x : x + (x2 - x) * calcease(ease, div(sub(i, st), sub(ed, st))),
+				"size": 1.0,
+				"speed": 1.0,
+				"startTime": i,
+				"type": t,
+				"visibleTime": 9999999.0,
+				"yOffset": 0.0
+			};
+			compositeCommand.addCommand(HistoryUtils.createAddNoteCommand(noteData, lineid_select));
+		}
 	}
 
-	notecontrol.update();
+	// 执行复合命令
+	if (compositeCommand.commands.length > 0) {
+		historyManager.executeCommand(compositeCommand);
+	}
 });
 
 setInterval(main, 1000 / 60);

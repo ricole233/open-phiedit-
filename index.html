@@ -36,6 +36,9 @@
 			<div class="menu">
 				编辑
 				<div>
+					<div id="m-undo" class="history-btn">撤销 (Ctrl+Z)</div>
+					<div id="m-redo" class="history-btn">重做 (Ctrl+Y)</div>
+					<div style="height: 5px;"></div>
 					<div id="m-addline">添加判定线</div>
 					<div id="m-event">打开/关闭事件</div>
 					<div id="m-touch">打开/关闭触控模式</div>
@@ -53,7 +56,7 @@
 		</div>
 
 		<div style="display:flex">
-			<div style="border: 1px solid black; width: 72%;">
+			<div class ="tool-bar"style="border: 1px solid black; width: 72%;">
 				<div id="mode" style="display:flex">
 					<div class="note-btn" data-mode="computer"><img src="./src/img/1.svg" style="height: 100%;"><span
 							class="note-label"></span></div>
@@ -67,6 +70,9 @@
 							class="note-label">Hold</span></div>
 					<div style="margin-left: auto; display:flex">
 						<img src="./src/img/icon1.svg" style="height: 100%;" id="mobile-phone-play">
+						<div id="toolbar-undo" class="history-btn" data-action="undo" title="撤销上一个操作">撤销</div>
+						<div id="toolbar-redo" class="history-btn" data-action="redo" title="重做被撤销的操作">重做</div>
+						<div id="toolbar-history-panel" class="history-panel-toggle" title="显示/隐藏历史记录面板 (Ctrl+Shift+H)">历史</div>
 						<div style="background: rgb(147, 147, 147); text-align:'center'; padding: 10px; margin-left: 3px; user-select: none;"
 							id="mobile-phone-delete">删除</div>
 					</div>
@@ -157,7 +163,7 @@
 		</div>
 		<div style="display:flex">
 			bpm：
-			<div id="s-bpm" style="border: 1px solid; padding: 3px; user-select: none; background: #EEE;">80</div>
+			<div id="s-bpm" style="padding: 3px; user-select: none; background: #545454;">80</div>
 			&nbsp;
 			竖向格子数：
 			<input value="1" type="number" id="s-shu" style="width: 100px">
@@ -337,6 +343,16 @@
 
 		.menu:hover>div {
 			display: block;
+		}
+
+		/* 历史记录按钮样式 */
+		.history-btn {
+			transition: opacity 0.3s ease, background-color 0.15s ease !important;
+		}
+
+		.history-btn:hover {
+			background: #3F3F3F !important;
+			color: #4DACFF !important;
 		}
 
 		/* 下载提示 */
@@ -683,6 +699,8 @@
 	<script src="./src/js/math.js"></script>
 	<script src="./src/js/note.js"></script>
 	<script src="./src/js/data.js"></script>
+	<script src="./src/js/eventBus.js"></script>
+	<script src="./src/js/history.js"></script>
 	<script src="./src/js/main.js"></script>
 	<script src="./src/js/renderer.js"></script>
 	<script src="./src/js/contextmenu.js"></script>

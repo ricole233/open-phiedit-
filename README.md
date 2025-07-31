@@ -1,101 +1,59 @@
-![image](![image](https://github.com/user-attachments/assets/1543f1e3-2c90-41b7-8ded-9b56add5631f)
-)
+# Open PhiEdit (Fork)
 
-# open-phiedit
+这是 [@cbs001](https://github.com/cbs001) 的 [open-phiedit](https://github.com/cbs001/open-phiedit) 项目的FORK，看个乐就行了，尝试加了点UI和反馈（很喜欢ae的ui，很想做成AE的UI但是不会），内核没动
+# Open PhiEdit fork
 
-非常简洁的开源制谱器。
+> 🌟 如果你喜欢这个项目，别忘了给原作者的 [open-phiedit](https://github.com/cbs001/open-phiedit) 点个Star！
 
-正在测试中，bug 很多。欢迎其它人 fork 此仓库。
+## 0.0.1：
 
-随缘更新。
+## 增加的内容
 
-## 操作说明
+### 1）.
+修改了文件夹的顺序位置
+### 2）.
+添加了反馈（音效、特效 音效有bug 具体为延迟 多音符同时给反馈则会卡顿 hold的反馈是只给了头和尾 这和只使用了starttime和endtime判断是否给反馈有关系 暂未修）
+### 3）.
+修改了css为~~AE~~ PRE的暗黑♂风 修改了一些小组件的位置
+### 4）.
+原本的ease缓动下拉栏： 将select换为一个统一的下拉框div 添加了图文  这部分暂未发现bug 新加的部分在main内
+### 5）.
+替换了alert为sweetalert2，这个提示会友好点，之后的历史记录相关添加都会用这个提示下
+## 已知的bug 
 
-### 一、音符
+### 1}.
+复制的音符在**被移动**后的消失位置不对（不是很影响）
+### 2}.
+判定线似乎没被渲染 不知道是啥原因 试试修正吧（不是很影响）
+### 3}.
+曲线音符填充似乎在填充后似乎还存在还没反馈，之后会改一下？（不是很影响）
+## 新建的bug(????????)
+### 4}.
+上述2提到的**音效有bug 具体为延迟 多音符同时给反馈则会卡顿 hold的反馈是只给了头和尾 这和只使用了starttime和endtime判断是否给反馈有关系**（有点影响 ~~我是傻*~~）
 
-单击 Q 放置 Tap，单击 W 放置 Drag，单击 E 放置 Flick
-
-单击 R 选择 Hold 头部位置，再次单击 R，选择 Hold 尾部位置
-
-### 二、事件
-
-注：如果右侧没有事件轨道，需要点击上方控制栏 -> 编辑 -> 打开/关闭事件
-
-放置方式和 Hold 的放置方式一样
-
-### 三、播放
-
-空格键开始播放，再次按下空格键停止播放
-
-## update
-
-**v5.0**：复制粘贴操作；简易的右键菜单；优化；
-
-**v4.0**：尝试对混合 bpm 提供支持，尝试对大文本读取提供支持，优化渲染，以及一些 rpe 特性
-
-**v3.1**：[微调] 修复按下大写字母无法放置的问题；预处理音符的距离，提供播放谱面的速度。
-
-**v3.0**：播放谱面，优化触摸放置功能
-
-**v2.0**: 触摸放置（测试），note 拖动，还有一些细节
-
-## 代码说明
-
-1. 坐标系说明
-
-渲染时以 canvas 坐标系为主，1600*900，其中 0,0 点为左上角，x 轴向右，y 轴向下
-
-音符处理时以 rpe 坐标系为主，1350*900，其中 0,0 点为中心，x 轴向右，y 轴向上
-
-2. 时间说明
-
-主要有三种类型的时间：
-
-1. 浮点型的秒数
-2. 带分数型的节拍数（由一个长度为3的Array构成）
-3. 浮点型的节拍数
-
-2与3本质是相同的，2可以避免浮点数误差，3使用更方便。
-
-math.js 中提供了 sec_to_beat（1 --> 2），beat_to_sec（2或3 --> 1）对以上三种类型实现了转换。
-
-## 支持
-
-- [x] "BPMList"
-- [ ] "META"
-- [ ] "chartTime"
-- [ ] "judgeLineGroup"
-- [ ] "judgeLineList"
-  - [ ] "Group"
-  - [x] "Name"
-  - [ ] "Texture"
-  - [x] "alphaControl"
-  - [ ] "anchor"
-  - [x] "bpmfactor"
-  - [ ] "eventLayers"
-    - [ ] "bezier"
-    - [ ] "bezierPoints"
-    - [x] "easingLeft"
-    - [x] "easingRight"
-    - [x] "easingType"
-    - [x] "end"
-    - [x] "endTime"
-    - [ ] "linkgroup"
-    - [x] "start"
-    - [x] "startTime"
-  - [ ] "extended"
-    - [ ] "inclineEvents"
-    - [x] "colorEvents"
-    - [x] "textEvents"
-    - [x] "scaleXEvents"
-    - [x] "scaleYEvents"
-    - [x] "paintEvents"
-  - [x] "father"
-  - [ ] "isCover"
-  - [ ] "isGif"
-  - [x] "numOfNotes"
-  - [x] "posControl"
-  - [x] "sizeControl"
-  - [ ] "skewControl"
-  - [x] "yControl"
-  - [ ] "zOrder" : 0
+## 计划
+修改ui（这个太泛了 不列了）
+### 1）.
+添加一个判定线编号和本体的显示（√）
+### 2）.
+添加历史记录 
+### 3）.
+添加判定线的贝塞尔和锚点编辑
+添加贝塞尔编辑面板方便编辑（三次贝塞尔 我做了组件 vue里的 还没转化为js）
+具体参考ae的motiontools脚本（的各个小按钮）结合flow脚本的表
+### 4）.
+转化了vue的一些组件到js（√） 应用input（×） 这些大多是input 操作会比现在的输入框舒服很多（）
+### 5）.
+这很野心~~空想，咕咕咕(6'''9)~~
+编辑器换为时间轴组件 预览区域只做预览工作
+观点：事件我觉得就是和关键帧差不多 只不过时间单位不太一样 
+且似乎不能进行多判定线编辑 这个操作不是很友好 而且ui上面也不是很友好 预览区+时间轴+工具栏的操作方式很爽
+### 6）.
+这很野心~~空想，咕咕咕(6'''9)~~
+支持自定义贝塞尔线条来编辑 
+观点： ae侧的编辑很舒服
+### 7）.
+这很野心~~空想，咕咕咕(6'''9)~~
+添加发射器、中继器：
+具体参考RedGiant的particular插件（在ae内很有名）和ae的中继器
+纯空想 有大佬有想法最好了

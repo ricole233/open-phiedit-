@@ -5,9 +5,9 @@
 	<meta charset="UTF-8">
 	<title>open phiedit 5</title>
 	<!-- jQuery -->
-	<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+	<!-- <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script> -->
 	<!-- Vue 3 -->
-	<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+	<!-- <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> -->
 	<!-- SweetAlert2 -->
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -202,7 +202,7 @@
 		</div>
 		<div style="display:flex">
 			bpm：
-			<div id="s-bpm" style="border: 1px solid; padding: 3px; user-select: none; background: #EEE;">80</div>
+			<div id="s-bpm" style="border: 1px solid; padding: 3px; user-select: none; background: #545454;">80</div>
 			&nbsp;
 			竖向格子数：
 			<input value="1" type="number" id="s-shu" style="width: 100px">
@@ -710,7 +710,7 @@
 	</script>
 
 	<!-- Vue App Initialization -->
-	<script>
+	<!-- <script>
 		// Create Vue app without interfering with existing JS
 		const { createApp, ref, reactive } = Vue;
 
@@ -754,6 +754,237 @@
 				});
 			} else {
 				console.error('jQuery 未能加载，请检查网络连接或使用本地jQuery库');
+			}
+		});
+	</script> -->
+
+	<!-- 缓动类型选择器组件 -->
+	<style>
+		.ease-select-container {
+			position: relative;
+			width: 100%;
+			margin-bottom: 10px;
+		}
+
+		.ease-select-header {
+			display: flex;
+			align-items: center;
+			border: 1px solid #4A4A4A;
+			padding: 5px;
+			background: #3A3A3A;
+			cursor: pointer;
+			border-radius: 2px;
+		}
+
+		.ease-select-header img {
+			width: 30px;
+			height: 30px;
+			margin-right: 10px;
+			border: 1px solid #555;
+		}
+
+		.ease-select-options {
+			position: absolute;
+			width: 100%;
+			max-height: 300px;
+			overflow-y: auto;
+			background: #2D2D2D;
+			border: 1px solid #4A4A4A;
+			border-radius: 2px;
+			z-index: 1000;
+			display: none;
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+		}
+
+		.ease-option {
+			display: flex;
+			align-items: center;
+			padding: 5px;
+			cursor: pointer;
+			transition: all 0.15s ease;
+		}
+
+		.ease-option:hover {
+			background: #3F3F3F;
+		}
+
+		.ease-option img {
+			width: 30px;
+			height: 30px;
+			margin-right: 10px;
+			border: 1px solid #555;
+		}
+	</style>
+
+	<script>
+		// 在页面加载完成后初始化自定义缓动选择器
+		document.addEventListener('DOMContentLoaded', function () {
+			// 缓动类型配置
+			const easeOptions = [
+				{ value: "1", text: "1 linear", image: "./src/img/math/1-linear.gif" },
+				{ value: "2", text: "2 sin out", image: "./src/img/math/2-sin-out.gif" },
+				{ value: "3", text: "3 sin in", image: "./src/img/math/3-sin-in.gif" },
+				{ value: "4", text: "4 quad out", image: "./src/img/math/4-quad-out.gif" },
+				{ value: "5", text: "5 quad in", image: "./src/img/math/5-quad-in.gif" },
+				{ value: "6", text: "6 sin io", image: "./src/img/math/6-sin-io.gif" },
+				{ value: "7", text: "7 quad io", image: "./src/img/math/7-quad-io.gif" },
+				{ value: "8", text: "8 cubic out", image: "./src/img/math/8-cubic-out.gif" },
+				{ value: "9", text: "9 cubic in", image: "./src/img/math/9-cubic-in.gif" },
+				{ value: "10", text: "10 quart out", image: "./src/img/math/10-quart-out.gif" },
+				{ value: "11", text: "11 quart in", image: "./src/img/math/11-quart-in.gif" },
+				{ value: "12", text: "12 cubic io", image: "./src/img/math/12-cubic-io.gif" },
+				{ value: "13", text: "13 quart io", image: "./src/img/math/13-quart-io.gif" },
+				{ value: "14", text: "14 quint out", image: "./src/img/math/14-quint-out.gif" },
+				{ value: "15", text: "15 quint in", image: "./src/img/math/15-quint-in.gif" },
+				{ value: "16", text: "16 expo out", image: "./src/img/math/16-expo-out.gif" },
+				{ value: "17", text: "17 expo in", image: "./src/img/math/17-expo-in.gif" },
+				{ value: "18", text: "18 circ out", image: "./src/img/math/18-circ-out.gif" },
+				{ value: "19", text: "19 circ in", image: "./src/img/math/19-circ-in.gif" },
+				{ value: "20", text: "20 back out", image: "./src/img/math/20-back-out.gif" },
+				{ value: "21", text: "21 back in", image: "./src/img/math/21-back-in.gif" },
+				{ value: "22", text: "22 circ in", image: "./src/img/math/22-circ-in.gif" },
+				{ value: "23", text: "23 back io", image: "./src/img/math/23-back-io.gif" },
+				{ value: "24", text: "24 elastic out", image: "./src/img/math/24-elastic-out.gif" },
+				{ value: "25", text: "25 elastic in", image: "./src/img/math/25-elastic-in.gif" },
+				{ value: "26", text: "26 bounce out", image: "./src/img/math/26-bounce-out.gif" },
+				{ value: "27", text: "27 bounce in", image: "./src/img/math/27-bounce-in.gif" },
+				{ value: "28", text: "28 bounce io", image: "./src/img/math/28-bounce-io.gif" }
+			];
+			
+			// 替换所有缓动选择器
+			replaceEaseSelect('edit2-ease', easeOptions, 'edit2-container');
+			replaceEaseSelect('edit4-ease', easeOptions, 'edit4-container');
+			replaceEaseSelect('fillnotes-ease', easeOptions, 'fillnotes-container');
+			
+			// 全局存储自定义下拉选择器的映射，方便外部访问
+			window.easeSelectContainers = {};
+			
+			// 创建自定义下拉框函数
+			function replaceEaseSelect(selectId, options, containerId) {
+				const originalSelect = document.getElementById(selectId);
+				if (!originalSelect) return;
+				
+				// 获取当前选中的值
+				const selectedValue = originalSelect.value;
+				
+				// 创建容器
+				const container = document.createElement('div');
+				container.className = 'ease-select-container';
+				container.id = containerId;
+				
+				// 创建头部（显示当前选中项）
+				const header = document.createElement('div');
+				header.className = 'ease-select-header';
+				
+				// 找到当前选中的选项
+				const selectedOption = options.find(opt => opt.value === selectedValue) || options[0];
+				
+				// 设置头部内容
+				header.innerHTML = `
+					<img src="${selectedOption.image}" alt="${selectedOption.text}">
+					<span>${selectedOption.text}</span>
+				`;
+				
+				// 创建选项容器
+				const optionsContainer = document.createElement('div');
+				optionsContainer.className = 'ease-select-options';
+				
+				// 添加所有选项
+				options.forEach(option => {
+					const optionElement = document.createElement('div');
+					optionElement.className = 'ease-option';
+					optionElement.dataset.value = option.value;
+					optionElement.innerHTML = `
+						<img src="${option.image}" alt="${option.text}">
+						<span>${option.text}</span>
+					`;
+					
+					// 点击选项时更新选中值
+					optionElement.addEventListener('click', function () {
+						// 更新头部显示
+						header.innerHTML = `
+							<img src="${option.image}" alt="${option.text}">
+							<span>${option.text}</span>
+						`;
+						
+						// 更新原始select的值
+						originalSelect.value = option.value;
+						
+						// 触发原始select的change事件
+						const event = new Event('change');
+						originalSelect.dispatchEvent(event);
+						
+						// 隐藏选项列表
+						optionsContainer.style.display = 'none';
+					});
+					
+					optionsContainer.appendChild(optionElement);
+				});
+				
+				// 点击头部时显示/隐藏选项列表
+				header.addEventListener('click', function () {
+					// 先隐藏所有其他的选项列表
+					document.querySelectorAll('.ease-select-options').forEach(el => {
+						if (el !== optionsContainer) {
+							el.style.display = 'none';
+						}
+					});
+					
+					// 显示/隐藏当前选项列表
+					const isVisible = optionsContainer.style.display === 'block';
+					optionsContainer.style.display = isVisible ? 'none' : 'block';
+				});
+				
+				// 点击外部时隐藏选项列表
+				document.addEventListener('click', function (event) {
+					if (!container.contains(event.target)) {
+						optionsContainer.style.display = 'none';
+					}
+				});
+				
+				// 组装并替换原始select
+				container.appendChild(header);
+				container.appendChild(optionsContainer);
+				originalSelect.style.display = 'none';
+				originalSelect.parentNode.insertBefore(container, originalSelect.nextSibling);
+				
+				// 保存对原始select元素的引用，便于后续更新
+				container.originalSelect = originalSelect;
+				
+				// 创建更新UI的函数
+				function updateUI(value) {
+					const option = options.find(opt => opt.value === value) || options[0];
+					header.innerHTML = `
+						<img src="${option.image}" alt="${option.text}">
+						<span>${option.text}</span>
+					`;
+				}
+				
+				// 重写原始select的value属性setter
+				const originalDescriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+				Object.defineProperty(originalSelect, 'value', {
+					set: function(val) {
+						const result = originalDescriptor.set.call(this, val);
+						updateUI(val);
+						return result;
+					},
+					get: function() {
+						return originalDescriptor.get.call(this);
+					}
+				});
+				
+				// 添加自定义更新方法
+				container.updateValue = function(value) {
+					updateUI(value);
+				};
+				
+				// 存储到全局映射中
+				window.easeSelectContainers[selectId] = container;
+				
+				// 监听原始select的change事件
+				originalSelect.addEventListener('change', function() {
+					updateUI(this.value);
+				});
 			}
 		});
 	</script>

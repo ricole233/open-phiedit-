@@ -530,10 +530,15 @@ var sidebarcontrol = {
 		// edit2
 		$("edit2-ease").addEventListener("change", () => {
 			if (selection_ev.length > 0) {
-				if (isNaN(Number($("edit2-ease").value)) || ((selection_ev[0][1] == "speedEvents") && $("edit2-ease").value != "1")) $("edit-x").value = evs[evs_layer][selection_ev[0][1]][selection_ev[0][0]].easingType;
-				else {
+				if (isNaN(Number($("edit2-ease").value)) || ((selection_ev[0][1] == "speedEvents") && $("edit2-ease").value != "1")) {
+					$("edit-x").value = evs[evs_layer][selection_ev[0][1]][selection_ev[0][0]].easingType;
+				} else {
 					for (let i = 0, v = Number($("edit2-ease").value); i < selection_ev.length; i++) {
-						evs[evs_layer][selection_ev[0][1]][selection_ev[0][0]].easingType = v;
+						if (evs_layer == "ex") {
+							now_line.extended[selection_ev[i][1]][selection_ev[i][0]].easingType = v;
+						} else {
+							evs[evs_layer][selection_ev[i][1]][selection_ev[i][0]].easingType = v;
+						}
 					}
 				}
 			}
@@ -672,9 +677,19 @@ var sidebarcontrol = {
 			show(2);
 			if (evs_layer == "ex") var e = now_line.extended[selection_ev[0][1]][selection_ev[0][0]];
 			else var e = evs[evs_layer][selection_ev[0][1]][selection_ev[0][0]];
-			if (selection_ev[0][1] == "speedEvents") $("edit2-ease").value = 1;
-			else $("edit2-ease").value = e.easingType;
+			
+			// 设置事件类型名称
 			$("event-name").innerText = selection_ev[0][1];
+			
+			// 设置缓动类型
+			let easingType = (selection_ev[0][1] == "speedEvents") ? "1" : e.easingType.toString();
+			$("edit2-ease").value = easingType;
+			
+			// 强制更新自定义选择器UI
+			if (window.easeSelectContainers && window.easeSelectContainers["edit2-ease"]) {
+				window.easeSelectContainers["edit2-ease"].updateValue(easingType);
+			}
+			
 			$("edit2-time").value = e.startTime[0] + ":" + e.startTime[1] + "/" + e.startTime[2];
 			$("edit2-time2").value = e.endTime[0] + ":" + e.endTime[1] + "/" + e.endTime[2];
 			$("edit2-st").value = e.start;
@@ -1380,6 +1395,12 @@ $("fillnotes-open").addEventListener('click', () => {
 			$("fillnotes-time2").value = note0.startTime[0] + ":" + note0.startTime[1] + "/" + note0.startTime[2];
 			$("fillnotes-x2").value = note0.positionX;
 		}
+		
+		// 更新自定义选择器（使用默认值1-linear）
+		$("fillnotes-ease").value = "1";
+		if (window.easeSelectContainers && window.easeSelectContainers["fillnotes-ease"]) {
+			window.easeSelectContainers["fillnotes-ease"].updateValue("1");
+		}
 	}
 });
 $("fillnotes").addEventListener('click', () => {
@@ -1413,3 +1434,16 @@ $("fillnotes").addEventListener('click', () => {
 });
 
 setInterval(main, 1000 / 60);
+
+// 在批量编辑显示时更新自定义选择器
+const originalShow4 = sidebarcontrol.edit_update;
+sidebarcontrol.edit_update = function() {
+	originalShow4.apply(this, arguments);
+	
+	// 如果显示的是批量编辑面板，更新自定义选择器
+	if (selection.length > 1) {
+		if (window.easeSelectContainers && window.easeSelectContainers["edit4-ease"]) {
+			window.easeSelectContainers["edit4-ease"].updateValue($("edit4-ease").value);
+		}
+	}
+};

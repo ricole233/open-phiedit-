@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>缓动函数可视化工具</title>
+    <script src="./lib/gif.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webm-writer@0.3.0/webm-writer.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4cc9f0, #4361ee, #3a0ca3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .panel-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 550px;
+            height: 500px;
+            background: #0f172a;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .function-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+        }
+        
+        .func-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .func-item:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+        
+        .func-item.active {
+            background: rgba(59, 130, 246, 0.7);
+        }
+        
+        .func-item input {
+            margin-right: 8px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            background: linear-gradient(45deg, #3b82f6, #6366f1);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn.secondary {
+            background: linear-gradient(45deg, #64748b, #475569);
+        }
+        
+        .btn.warning {
+            background: linear-gradient(45deg, #f97316, #ef4444);
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 10px;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 20px;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .info-panel {
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: #60a5fa;
+        }
+        
+        .info-panel p {
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .animation-preview {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #4cc9f0;
+            border-radius: 50%;
+            display: none;
+        }
+        
+        .animation-track {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .motion-trail {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            opacity: 0.6;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        
+        .export-panel {
+            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            display: none; /* 默认隐藏 */
+        }
+        
+        .export-panel.active {
+            display: block;
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .format-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        
+        .export-status {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #60a5fa;
+            height: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 3px;
+            margin-top: 10px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar.active {
+            display: block;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .controls {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>缓动函数可视化工具</h1>
+        <p class="subtitle">探索28种不同缓动函数的图像，了解它们在动画和过渡中的行为</p>
+    </header>
+    
+    <div class="container">
+        <div class="panel">
+            <h2 class="panel-title">📈 函数图像</h2>
+            <div class="canvas-container">
+                <canvas id="graphCanvas"></canvas>
+                <div class="animation-track"></div>
+                <div class="animation-preview" id="animationBall"></div>
+            </div>
+            
+            <div class="controls">
+                <button id="compareBtn" class="btn">
+                    <i>📊</i> 添加对比
+                </button>
+                <button id="resetBtn" class="btn secondary">
+                    <i>🔄</i> 重置图表
+                </button>
+                <button id="animateBtn" class="btn">
+                    <i>🎬</i> 播放动画
+                </button>
+                <button id="exportBtn" class="btn">
+                    <i>💾</i> 导出动画
+                </button>
+            </div>
+            
+            <div class="legend" id="legendContainer">
+                <!-- 图例将在这里动态生成 -->
+            </div>
+            
+            <div class="export-panel" id="exportPanel">
+                <h3>导出设置</h3>
+                
+                <div class="format-selector">
+                    <span>格式：</span>
+                    <label><input type="radio" name="format" value="gif" checked> GIF</label>
+                    <label><input type="radio" name="format" value="webp"> WebP</label>
+                </div>
+                
+                <div class="checkbox-container">
+                    <input type="checkbox" id="showTrailCheckbox" checked>
+                    <label for="showTrailCheckbox">显示运动轨迹</label>
+                </div>
+                
+                <div class="checkbox-container">
+                    <label for="animationSpeed">动画速度：</label>
+                    <select id="animationSpeed">
+                        <option value="500">极快 (0.5秒)</option>
+                        <option value="1000">快速 (1秒)</option>
+                        <option value="2000" selected>正常 (2秒)</option>
+                        <option value="3000">慢速 (3秒)</option>
+                        <option value="5000">极慢 (5秒)</option>
+                    </select>
+                </div>
+                
+                <div class="checkbox-container">
+                    <label for="captureQuality">导出质量：</label>
+                    <select id="captureQuality">
+                        <option value="low">低质量 (小文件)</option>
+                        <option value="medium" selected>中等质量</option>
+                        <option value="high">高质量 (大文件)</option>
+                    </select>
+                </div>
+                
+                <div class="checkbox-container">
+                    <label for="coordinateMode">坐标模式：</label>
+                    <select id="coordinateMode">
+                        <option value="standard" selected>标准 (0,0)→(1,1)</option>
+                        <option value="easing">缓动 (0,1)→(1,0)</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+                
+                <div id="customCoordinates" style="display: none; margin: 10px 0; padding: 10px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                    <div class="coordinate-input">
+                        <label>起点 X: <input type="number" id="startX" min="0" max="1" step="0.1" value="0" style="width: 60px;"></label>
+                        <label>起点 Y: <input type="number" id="startY" min="0" max="1" step="0.1" value="0" style="width: 60px;"></label>
+                    </div>
+                    <div class="coordinate-input">
+                        <label>终点 X: <input type="number" id="endX" min="0" max="1" step="0.1" value="1" style="width: 60px;"></label>
+                        <label>终点 Y: <input type="number" id="endY" min="0" max="1" step="0.1" value="1" style="width: 60px;"></label>
+                    </div>
+                </div>
+                
+                <div class="export-options">
+                    <button id="captureBtn" class="btn">
+                        <i>📷</i> 捕获动画
+                    </button>
+                    <button id="closeExportBtn" class="btn secondary">
+                        <i>✖</i> 关闭
+                    </button>
+                </div>
+                
+                <div class="export-status" id="exportStatus"></div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2 class="panel-title">⚙️ 函数选择</h2>
+            <div class="function-selector" id="functionSelector">
+                <!-- 函数选项将在这里动态生成 -->
+            </div>
+            
+            <div class="info-panel">
+                <h3>关于缓动函数</h3>
+                <p>缓动函数控制动画过程中数值变化的速度，使动画效果更加自然和生动。</p>
+                <p>在动画中，线性变化（缓动函数1）通常显得机械，而非线性缓动函数可以创建更自然的加速和减速效果。</p>
+                <p>选择多个函数进行比较，了解它们的不同特性：</p>
+                <ul>
+                    <li>缓入函数：开始时缓慢，然后加速</li>
+                    <li>缓出函数：开始时快速，然后减速</li>
+                    <li>缓入缓出函数：开始和结束都缓慢</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 缓动函数定义
+        const easingFunctions = [
+            { id: 1, name: "线性", func: x => x },
+            { id: 2, name: "正弦缓入", func: x => Math.sin((x * Math.PI) / 2) },
+            { id: 3, name: "正弦缓出", func: x => 1 - Math.cos((x * Math.PI) / 2) },
+            { id: 4, name: "二次缓出", func: x => 1 - (1 - x) * (1 - x) },
+            { id: 5, name: "二次缓入", func: x => x * x },
+            { id: 6, name: "余弦缓出", func: x => -(Math.cos(Math.PI * x) - 1) / 2 },
+            { id: 7, name: "二次缓入缓出", func: x => x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2 },
+            { id: 8, name: "三次缓出", func: x => 1 - Math.pow(1 - x, 3) },
+            { id: 9, name: "三次缓入", func: x => x * x * x },
+            { id: 10, name: "四次缓出", func: x => 1 - Math.pow(1 - x, 4) },
+            { id: 11, name: "四次缓入", func: x => x * x * x * x },
+            { id: 12, name: "三次缓入缓出", func: x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2 },
+            { id: 13, name: "四次缓入缓出", func: x => x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2 },
+            { id: 14, name: "五次缓出", func: x => 1 - Math.pow(1 - x, 5) },
+            { id: 15, name: "五次缓入", func: x => x * x * x * x * x },
+            { id: 16, name: "指数缓出", func: x => x === 1 ? 1 : 1 - Math.pow(2, -10 * x) },
+            { id: 17, name: "指数缓入", func: x => x === 0 ? 0 : Math.pow(2, 10 * x - 10) },
+            { id: 18, name: "圆形缓出", func: x => Math.sqrt(1 - Math.pow(x - 1, 2)) },
+            { id: 19, name: "圆形缓入", func: x => 1 - Math.sqrt(1 - Math.pow(x, 2)) },
+            { id: 20, name: "过度回弹缓出", func: x => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2) },
+            { id: 21, name: "过度回弹缓入", func: x => 2.70158 * x * x * x - 1.70158 * x * x },
+            { id: 22, name: "圆形缓入缓出", func: x => x < 0.5 ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2 : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2 },
+            { id: 23, name: "回弹缓入缓出", func: x => x < 0.5 ? (Math.pow(2 * x, 2) * ((2.5949095 + 1) * 2 * x - 2.5949095)) / 2 : (Math.pow(2 * x - 2, 2) * ((2.5949095 + 1) * (x * 2 - 2) + 2.5949095) + 2) / 2 },
+            { id: 24, name: "弹性缓出", func: x => x === 0 ? 0 : x === 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * (2 * Math.PI) / 3) + 1 },
+            { id: 25, name: "弹性缓入", func: x => x === 0 ? 0 : x === 1 ? 1 : -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * (2 * Math.PI) / 3) },
+            { id: 26, name: "弹跳缓出", func: x => {
+                const n1 = 7.5625;
+                const d1 = 2.75;
+                
+                if (x < 1 / d1) {
+                    return n1 * x * x;
+                } else if (x < 2 / d1) {
+                    return n1 * (x -= 1.5 / d1) * x + 0.75;
+                } else if (x < 2.5 / d1) {
+                    return n1 * (x -= 2.25 / d1) * x + 0.9375;
+                } else {
+                    return n1 * (x -= 2.625 / d1) * x + 0.984375;
+                }
+            }},
+            { id: 27, name: "弹跳缓入", func: x => 1 - easingFunctions[25].func(1 - x) },
+            { id: 28, name: "弹跳缓入缓出", func: x => x < 0.5 
+                ? (1 - easingFunctions[25].func(1 - 2 * x)) / 2 
+                : (1 + easingFunctions[25].func(2 * x - 1)) / 2 
+            }
+        ];
+
+        // 颜色集合
+        const colors = [
+            '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFBE0B', '#FB5607', 
+            '#8338EC', '#3A86FF', '#FF006E', '#38B000', '#9EF01F',
+            '#FF70A6', '#70D6FF', '#FFD670', '#E9FF70', '#8AC926',
+            '#1982C4', '#6A4C93', '#F15BB5', '#FEE440', '#00BBF9',
+            '#00F5D4', '#9B5DE5', '#F15BB5', '#00F5D4', '#FEE440',
+            '#00BBF9', '#9B5DE5', '#00F5D4'
+        ];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('graphCanvas');
+            const ctx = canvas.getContext('2d');
+            const functionSelector = document.getElementById('functionSelector');
+            const legendContainer = document.getElementById('legendContainer');
+            const compareBtn = document.getElementById('compareBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const animateBtn = document.getElementById('animateBtn');
+            const exportBtn = document.getElementById('exportBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            const showTrailCheckbox = document.getElementById('showTrailCheckbox');
+            const exportStatus = document.getElementById('exportStatus');
+            const animationBall = document.getElementById('animationBall');
+            const animationTrack = document.querySelector('.animation-track');
+            const animationSpeed = document.getElementById('animationSpeed');
+            const captureQuality = document.getElementById('captureQuality');
+            const exportPanel = document.getElementById('exportPanel');
+            const closeExportBtn = document.getElementById('closeExportBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const coordinateMode = document.getElementById('coordinateMode');
+            const customCoordinates = document.getElementById('customCoordinates');
+            const startX = document.getElementById('startX');
+            const startY = document.getElementById('startY');
+            const endX = document.getElementById('endX');
+            const endY = document.getElementById('endY');
+            
+            // 轨迹相关变量
+            let trailElements = [];
+            let isAnimating = false;
+            let animationFrameId = null;
+            let animationFrames = [];
+            let gifRecorder = null;
+            let webpRecorder = null;
+            let captureMode = false;
+            
+            // 初始化画布尺寸
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                drawFunctions(); // 直接调用drawFunctions而不是drawGraph
+            }
+            
+            // 生成函数选择器
+            function renderFunctionSelector() {
+                functionSelector.innerHTML = '';
+                easingFunctions.forEach((func, index) => {
+                    const funcItem = document.createElement('div');
+                    funcItem.className = 'func-item';
+                    funcItem.innerHTML = `
+                        <input type="checkbox" id="func-${func.id}" data-id="${func.id}">
+                        <label for="func-${func.id}">${func.id}. ${func.name}</label>
+                    `;
+                    functionSelector.appendChild(funcItem);
+                    
+                    // 默认选中前5个函数
+                    if (index < 5) {
+                        funcItem.querySelector('input').checked = true;
+                        funcItem.classList.add('active');
+                    }
+                    
+                    // 点击事件
+                    funcItem.addEventListener('click', (e) => {
+                        if (e.target.tagName !== 'INPUT') {
+                            const checkbox = funcItem.querySelector('input');
+                            checkbox.checked = !checkbox.checked;
+                        }
+                        
+                        funcItem.classList.toggle('active', funcItem.querySelector('input').checked);
+                        drawGraph();
+                    });
+                });
+            }
+            
+            // 获取选中的函数
+            function getSelectedFunctions() {
+                const selected = [];
+                document.querySelectorAll('#functionSelector .func-item input:checked').forEach(input => {
+                    const id = parseInt(input.getAttribute('data-id'));
+                    const func = easingFunctions.find(f => f.id === id);
+                    if (func) selected.push(func);
+                });
+                return selected;
+            }
+            
+            // 绘制坐标系
+            function drawCoordinateSystem() {
+                const width = canvas.width;
+                const height = canvas.height;
+                const padding = 60;
+                const graphWidth = width - 2 * padding;
+                const graphHeight = height - 2 * padding;
+                
+                // 清除画布
+                ctx.clearRect(0, 0, width, height);
+                
+                // 绘制背景
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, width, height);
+                
+                // 绘制网格
+                ctx.strokeStyle = 'rgba(100, 116, 139, 0.2)';
+                ctx.lineWidth = 1;
+                
+                // 垂直网格线
+                for (let i = 0; i <= 10; i++) {
+                    const x = padding + i * graphWidth / 10;
+                    ctx.beginPath();
+                    ctx.moveTo(x, padding);
+                    ctx.lineTo(x, height - padding);
+                    ctx.stroke();
+                }
+                
+                // 水平网格线
+                for (let i = 0; i <= 10; i++) {
+                    const y = padding + i * graphHeight / 10;
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(width - padding, y);
+                    ctx.stroke();
+                }
+                
+                // 绘制坐标轴
+                ctx.strokeStyle = '#64748b';
+                ctx.lineWidth = 2;
+                
+                // X轴
+                ctx.beginPath();
+                ctx.moveTo(padding, height - padding);
+                ctx.lineTo(width - padding, height - padding);
+                ctx.stroke();
+                
+                // Y轴
+                ctx.beginPath();
+                ctx.moveTo(padding, height - padding);
+                ctx.lineTo(padding, padding);
+                ctx.stroke();
+                
+                // 绘制箭头
+                ctx.beginPath();
+                ctx.moveTo(width - padding, height - padding);
+                ctx.lineTo(width - padding - 10, height - padding - 5);
+                ctx.lineTo(width - padding - 10, height - padding + 5);
+                ctx.closePath();
+                ctx.fillStyle = '#64748b';
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, padding);
+                ctx.lineTo(padding - 5, padding + 10);
+                ctx.lineTo(padding + 5, padding + 10);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 绘制刻度
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                
+                // X轴刻度
+                for (let i = 0; i <= 10; i++) {
+                    const x = padding + i * graphWidth / 10;
+                    ctx.fillText((i / 10).toFixed(1), x, height - padding + 5);
+                }
+                
+                // Y轴刻度
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                for (let i = 0; i <= 10; i++) {
+                    const y = height - padding - i * graphHeight / 10;
+                    ctx.fillText((i / 10).toFixed(1), padding - 5, y);
+                }
+                
+                // 绘制坐标轴标签
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('时间 (t)', width / 2, height - 10);
+                
+                ctx.save();
+                ctx.translate(10, height / 2);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'center';
+                ctx.fillText('进度 (p)', 0, 0);
+                ctx.restore();
+                
+                return { padding, graphWidth, graphHeight };
+            }
+            
+            // 绘制函数曲线
+            function drawFunctions() {
+                const selectedFuncs = getSelectedFunctions();
+                const { padding, graphWidth, graphHeight } = drawCoordinateSystem();
+                
+                // 更新图例
+                updateLegend(selectedFuncs);
+                
+                // 绘制参考线（y=x）
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(padding, height - padding);
+                ctx.lineTo(padding + graphWidth, padding);
+                ctx.stroke();
+                
+                // 获取当前坐标模式的起点和终点
+                let startPointX = 0, startPointY = 0, endPointX = 1, endPointY = 0;
+                
+                if (coordinateMode.value === 'standard') {
+                    startPointX = 0;
+                    startPointY = 0;
+                    endPointX = 1;
+                    endPointY = 1;
+                } else if (coordinateMode.value === 'easing') {
+                    startPointX = 0;
+                    startPointY = 1;
+                    endPointX = 1;
+                    endPointY = 0;
+                } else {
+                    startPointX = parseFloat(startX.value) || 0;
+                    startPointY = parseFloat(startY.value) || 0;
+                    endPointX = parseFloat(endX.value) || 1;
+                    endPointY = parseFloat(endY.value) || 1;
+                }
+                
+                // 绘制起点和终点标记
+                const startX = padding;
+                const startY = height - padding - startPointY * graphHeight;
+                const endX = padding + graphWidth;
+                const endY = height - padding - endPointY * graphHeight;
+                
+                // 起点标记
+                ctx.fillStyle = '#4cc9f0';
+                ctx.beginPath();
+                ctx.arc(startX, startY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 起点文字
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`起点(${startPointX},${startPointY})`, startX + 8, startY - 5);
+                
+                // 终点标记
+                ctx.fillStyle = '#ff6b6b';
+                ctx.beginPath();
+                ctx.arc(endX, endY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 终点文字
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(`终点(${endPointX},${endPointY})`, endX - 8, endY - 5);
+                
+                // 绘制选中的函数
+                selectedFuncs.forEach((func, index) => {
+                    const color = colors[func.id - 1];
+                    
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    for (let i = 0; i <= graphWidth; i++) {
+                        const x = i / graphWidth;
+                        const y = func.func(x);
+                        
+                        const plotX = padding + i;
+                        const plotY = height - padding - y * graphHeight;
+                        
+                        if (i === 0) {
+                            ctx.moveTo(plotX, plotY);
+                        } else {
+                            ctx.lineTo(plotX, plotY);
+                        }
+                    }
+                    
+                    ctx.stroke();
+                });
+            }
+            
+            // 更新图例
+            function updateLegend(selectedFuncs) {
+                legendContainer.innerHTML = '';
+                
+                selectedFuncs.forEach(func => {
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+                    legendItem.innerHTML = `
+                        <div class="legend-color" style="background-color: ${colors[func.id - 1]}"></div>
+                        <span>${func.id}. ${func.name}</span>
+                    `;
+                    legendContainer.appendChild(legendItem);
+                });
+            }
+            
+            // 绘制图表
+            function drawGraph() {
+                // 调整大小但不再递归调用
+                const container = canvas.parentElement;
+                if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
+                    resizeCanvas();
+                } else {
+                    drawFunctions();
+                }
+            }
+            
+            // 添加对比函数
+            compareBtn.addEventListener('click', () => {
+                // 随机选择一个未选中的函数
+                const unselected = easingFunctions.filter(func => 
+                    !document.querySelector(`#functionSelector input[data-id="${func.id}"]:checked`)
+                );
+                
+                if (unselected.length > 0) {
+                    const randomFunc = unselected[Math.floor(Math.random() * unselected.length)];
+                    const input = document.querySelector(`#functionSelector input[data-id="${randomFunc.id}"]`);
+                    
+                    if (input) {
+                        input.checked = true;
+                        input.parentElement.classList.add('active');
+                        drawGraph();
+                    }
+                }
+            });
+            
+            // 重置图表
+            resetBtn.addEventListener('click', () => {
+                document.querySelectorAll('#functionSelector input').forEach(input => {
+                    input.checked = input.dataset.id <= 28;
+                    input.parentElement.classList.toggle('active', input.checked);
+                });
+                drawGraph();
+            });
+            
+            // 播放动画
+            animateBtn.addEventListener('click', () => {
+                const selectedFuncs = getSelectedFunctions();
+                if (selectedFuncs.length === 0) return;
+                
+                // 清除之前的轨迹
+                clearTrail();
+                
+                // 重置动画球位置
+                animationBall.style.display = 'block';
+                
+                // 获取容器高度和轨道宽度
+                const containerHeight = animationTrack.parentElement.clientHeight - 80;
+                const trackWidth = animationTrack.clientWidth - 40;
+                
+                // 根据坐标模式设置初始位置
+                let initialBottom;
+                
+                if (coordinateMode.value === 'standard') {
+                    // 标准模式 (0,0)→(1,1)
+                    initialBottom = 40; // 底部
+                } else if (coordinateMode.value === 'easing') {
+                    // 缓动模式 (0,1)→(1,0)
+                    initialBottom = 40 + containerHeight; // 顶部
+                } else {
+                    // 自定义模式
+                    const sy = parseFloat(startY.value) || 0;
+                    initialBottom = 40 + sy * containerHeight;
+                }
+                
+                animationBall.style.bottom = `${initialBottom}px`;
+                animationBall.style.left = '40px';
+                animationBall.style.backgroundColor = colors[selectedFuncs[0].id - 1];
+                
+                const startTime = Date.now();
+                const duration = parseInt(animationSpeed.value); // 使用选择的动画速度
+                
+                // 重置捕获状态
+                if (captureMode) {
+                    animationFrames = [];
+                    const format = document.querySelector('input[name="format"]:checked').value;
+                    const quality = captureQuality.value;
+                    
+                    if (format === 'gif') {
+                        // 根据质量设置参数
+                        let gifQuality = 10;
+                        let gifWorkers = 2;
+                        
+                        if (quality === 'low') {
+                            gifQuality = 1;
+                            gifWorkers = 1;
+                        } else if (quality === 'high') {
+                            gifQuality = 20;
+                            gifWorkers = 4;
+                        }
+                        
+                        // 检测是否是本地文件（file://协议）
+                        const isLocalFile = window.location.protocol === 'file:';
+                        
+                        if (isLocalFile) {
+                            // 提示用户在本地文件模式下无法使用GIF导出
+                            exportStatus.textContent = '本地文件模式下无法导出GIF，请使用HTTP服务器！';
+                            progressBar.classList.add('active');
+                            progressFill.style.width = '100%';
+                            
+                            // 显示如何解决的提示
+                            setTimeout(() => {
+                                alert('由于浏览器安全限制，在本地文件模式下无法使用GIF导出功能。\n\n'+
+                                      '解决方法：\n'+
+                                      '1. 使用简单的HTTP服务器提供文件\n'+
+                                      '2. 例如，可以使用Python命令：\n'+
+                                      '   python -m http.server\n'+
+                                      '   然后访问 http://localhost:8000/src/js/math.html');
+                                captureMode = false;
+                            }, 100);
+                            return;
+                        }
+                        
+                        gifRecorder = new GIF({
+                            workers: gifWorkers,
+                            quality: gifQuality,
+                            width: canvas.width,
+                            height: canvas.height,
+                            workerScript: './lib/gif.worker.js'
+                        });
+                        
+                        gifRecorder.on('finished', function(blob) {
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = '缓动函数动画.gif';
+                            link.click();
+                            exportStatus.textContent = 'GIF导出完成！';
+                            captureMode = false;
+                            
+                            // 3秒后隐藏进度条
+                            setTimeout(() => {
+                                progressBar.classList.remove('active');
+                            }, 3000);
+                        });
+                        
+                        gifRecorder.on('progress', function(p) {
+                            exportStatus.textContent = `正在生成GIF... ${Math.round(p * 100)}%`;
+                            // 更新进度条
+                            progressBar.classList.add('active');
+                            progressFill.style.width = `${Math.round(p * 100)}%`;
+                        });
+                    } else if (format === 'webp') {
+                        // 检测是否是本地文件（file://协议）
+                        const isLocalFile = window.location.protocol === 'file:';
+                        
+                        if (isLocalFile) {
+                            // 提示用户在本地文件模式下可能无法正常使用WebP导出
+                            exportStatus.textContent = '本地文件模式下WebP导出可能不正常，建议使用HTTP服务器！';
+                            progressBar.classList.add('active');
+                            progressFill.style.width = '100%';
+                        }
+                        
+                        // 根据质量设置参数
+                        let webpQuality = 0.8;
+                        
+                        if (quality === 'low') {
+                            webpQuality = 0.6;
+                        } else if (quality === 'high') {
+                            webpQuality = 0.95;
+                        }
+                        
+                        webpRecorder = new WebMWriter({
+                            quality: webpQuality,
+                            frameRate: 30,
+                            transparent: false
+                        });
+                    }
+                    
+                    exportStatus.textContent = `正在录制...`;
+                    progressBar.classList.add('active');
+                    progressFill.style.width = '0%';
+                }
+                
+                isAnimating = true;
+                let lastFrameTime = 0;
+                let frameCount = 0;
+                
+                function animate(timestamp) {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // 使用第一个选中的函数计算位置
+                    const x = selectedFuncs[0].func(progress);
+                    const leftPos = 40 + progress * trackWidth;
+                    
+                    // 根据坐标模式计算垂直位置
+                    let bottomPos;
+                    const containerHeight = animationTrack.parentElement.clientHeight - 80;
+                    
+                    if (coordinateMode.value === 'standard') {
+                        // 标准模式 (0,0)→(1,1)
+                        bottomPos = 40 + x * containerHeight;
+                    } else if (coordinateMode.value === 'easing') {
+                        // 缓动模式 (0,1)→(1,0)
+                        bottomPos = 40 + (1 - x) * containerHeight;
+                    } else {
+                        // 自定义模式
+                        const sx = parseFloat(startX.value) || 0;
+                        const sy = parseFloat(startY.value) || 0;
+                        const ex = parseFloat(endX.value) || 1;
+                        const ey = parseFloat(endY.value) || 1;
+                        
+                        // 根据进度在起点和终点之间插值
+                        const currentX = sx + progress * (ex - sx);
+                        const currentY = sy + x * (ey - sy);
+                        
+                        // 将 Y 坐标转换为画布位置
+                        bottomPos = 40 + currentY * containerHeight;
+                    }
+                    
+                    animationBall.style.left = `${leftPos}px`;
+                    animationBall.style.bottom = `${bottomPos}px`;
+                    
+                    // 更新颜色
+                    animationBall.style.backgroundColor = colors[selectedFuncs[0].id - 1];
+                    
+                    // 添加轨迹
+                    if (showTrailCheckbox.checked) {
+                        addTrailPoint(leftPos, bottomPos, colors[selectedFuncs[0].id - 1]);
+                    }
+                    
+                    // 捕获帧 - 控制帧率以避免文件过大
+                    if (captureMode) {
+                        const format = document.querySelector('input[name="format"]:checked').value;
+                        // 每33ms捕获一帧，约30fps
+                        const currentTime = timestamp || performance.now();
+                        if ((currentTime - lastFrameTime) >= 33 || progress >= 1) {
+                            lastFrameTime = currentTime;
+                            frameCount++;
+                            
+                            if (format === 'gif') {
+                                // 创建临时canvas来捕获当前帧和小球
+                                const tempCanvas = document.createElement('canvas');
+                                tempCanvas.width = canvas.width;
+                                tempCanvas.height = canvas.height;
+                                const tempCtx = tempCanvas.getContext('2d');
+                                
+                                // 首先绘制主canvas内容
+                                tempCtx.drawImage(canvas, 0, 0);
+                                
+                                // 然后绘制小球
+                                const container = document.querySelector('.canvas-container');
+                                const ballRect = animationBall.getBoundingClientRect();
+                                const containerRect = container.getBoundingClientRect();
+                                
+                                tempCtx.fillStyle = animationBall.style.backgroundColor;
+                                tempCtx.beginPath();
+                                tempCtx.arc(
+                                    ballRect.left + 20 - containerRect.left, 
+                                    ballRect.top + 20 - containerRect.top, 
+                                    20, 0, Math.PI * 2
+                                );
+                                tempCtx.fill();
+                                
+                                // 绘制轨迹点
+                                if (showTrailCheckbox.checked) {
+                                    document.querySelectorAll('.motion-trail').forEach(trail => {
+                                        const trailRect = trail.getBoundingClientRect();
+                                        tempCtx.fillStyle = trail.style.backgroundColor;
+                                        tempCtx.globalAlpha = parseFloat(trail.style.opacity) || 0.6;
+                                        
+                                        const trailSize = parseFloat(trail.style.width) || 8;
+                                        tempCtx.beginPath();
+                                        tempCtx.arc(
+                                            trailRect.left + trailSize/2 - containerRect.left,
+                                            trailRect.top + trailSize/2 - containerRect.top,
+                                            trailSize/2, 0, Math.PI * 2
+                                        );
+                                        tempCtx.fill();
+                                    });
+                                    tempCtx.globalAlpha = 1.0;
+                                }
+                                
+                                // 添加帧
+                                gifRecorder.addFrame(tempCtx, {copy: true, delay: 33});
+                            } else if (format === 'webp') {
+                                // 创建临时canvas来捕获当前帧
+                                const tempCanvas = document.createElement('canvas');
+                                tempCanvas.width = canvas.width;
+                                tempCanvas.height = canvas.height;
+                                const tempCtx = tempCanvas.getContext('2d');
+                                tempCtx.drawImage(canvas, 0, 0);
+                                
+                                // 添加动画球
+                                const container = document.querySelector('.canvas-container');
+                                const ballRect = animationBall.getBoundingClientRect();
+                                const containerRect = container.getBoundingClientRect();
+                                
+                                tempCtx.fillStyle = animationBall.style.backgroundColor;
+                                tempCtx.beginPath();
+                                
+                                // 使用实际位置确保坐标准确
+                                const ballX = ballRect.left + 20 - containerRect.left;
+                                const ballY = ballRect.top + 20 - containerRect.top;
+                                
+                                tempCtx.arc(
+                                    ballX, 
+                                    ballY, 
+                                    20, 0, Math.PI * 2
+                                );
+                                tempCtx.fill();
+                                
+                                webpRecorder.addFrame(tempCanvas);
+                            }
+                        }
+                    }
+                    
+                    if (progress < 1) {
+                        animationFrameId = requestAnimationFrame(animate);
+                    } else {
+                        // 动画完成
+                        isAnimating = false;
+                        
+                        // 完成捕获
+                        if (captureMode) {
+                            const format = document.querySelector('input[name="format"]:checked').value;
+                            
+                            if (format === 'gif') {
+                                // 确保至少有几帧
+                                if (frameCount < 5) {
+                                    // 如果帧太少，多加几帧结尾状态
+                                    for (let i = 0; i < 5; i++) {
+                                        // 创建临时canvas
+                                        const tempCanvas = document.createElement('canvas');
+                                        tempCanvas.width = canvas.width;
+                                        tempCanvas.height = canvas.height;
+                                        const tempCtx = tempCanvas.getContext('2d');
+                                        
+                                        // 绘制主canvas内容
+                                        tempCtx.drawImage(canvas, 0, 0);
+                                        
+                                        // 绘制小球（在最终位置）
+                                        const container = document.querySelector('.canvas-container');
+                                        const containerRect = container.getBoundingClientRect();
+                                        
+                                        tempCtx.fillStyle = colors[selectedFuncs[0].id - 1];
+                                        
+                                        // 小球在结束位置
+                                        const trackWidth = animationTrack.clientWidth - 40;
+                                        const endX = 40 + trackWidth;
+                                        
+                                        // 根据坐标模式计算垂直位置
+                                        let endY;
+                                        const containerHeight = animationTrack.parentElement.clientHeight - 80;
+                                        
+                                        if (coordinateMode.value === 'standard') {
+                                            // 标准模式 (0,0)→(1,1)
+                                            endY = 40 + selectedFuncs[0].func(1) * containerHeight;
+                                        } else if (coordinateMode.value === 'easing') {
+                                            // 缓动模式 (0,1)→(1,0)
+                                            endY = 40 + (1 - selectedFuncs[0].func(1)) * containerHeight;
+                                        } else {
+                                            // 自定义模式
+                                            const sx = parseFloat(startX.value) || 0;
+                                            const sy = parseFloat(startY.value) || 0;
+                                            const ex = parseFloat(endX.value) || 1;
+                                            const ey = parseFloat(endY.value) || 1;
+                                            
+                                            // 终点的 Y 坐标
+                                            const finalY = sy + selectedFuncs[0].func(1) * (ey - sy);
+                                            endY = 40 + finalY * containerHeight;
+                                        }
+                                        
+                                        // 绘制小球
+                                        tempCtx.beginPath();
+                                        tempCtx.arc(
+                                            endX + 20, 
+                                            canvas.height - endY - 20, 
+                                            20, 0, Math.PI * 2
+                                        );
+                                        tempCtx.fill();
+                                        
+                                        // 添加帧
+                                        gifRecorder.addFrame(tempCtx, {copy: true, delay: 100});
+                                    }
+                                }
+                                
+                                // 添加延迟以确保所有帧都被捕获
+                                setTimeout(() => {
+                                    exportStatus.textContent = '正在生成GIF...';
+                                    gifRecorder.render();
+                                }, 100);
+                            } else if (format === 'webp') {
+                                exportStatus.textContent = '正在生成WebP...';
+                                progressFill.style.width = '50%'; // 显示进度
+                                
+                                // 添加延迟以确保所有帧都被捕获
+                                setTimeout(() => {
+                                    webpRecorder.complete().then(function(webpBlob) {
+                                        progressFill.style.width = '100%'; // 显示进度
+                                        const url = URL.createObjectURL(webpBlob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = '缓动函数动画.webm';
+                                        link.click();
+                                        exportStatus.textContent = 'WebP导出完成！';
+                                        captureMode = false;
+                                        
+                                        // 3秒后隐藏进度条
+                                        setTimeout(() => {
+                                            progressBar.classList.remove('active');
+                                        }, 3000);
+                                    }).catch(function(error) {
+                                        exportStatus.textContent = '导出失败: ' + error;
+                                        captureMode = false;
+                                        progressBar.classList.remove('active');
+                                    });
+                                }, 100);
+                            }
+                        }
+                        
+                        // 动画完成后隐藏
+                        setTimeout(() => {
+                            animationBall.style.display = 'none';
+                        }, 300);
+                    }
+                }
+                
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                
+                animationFrameId = requestAnimationFrame(animate);
+            });
+            
+            // 添加轨迹点
+            function addTrailPoint(x, y, color) {
+                const container = document.querySelector('.canvas-container');
+                const trail = document.createElement('div');
+                trail.className = 'motion-trail';
+                trail.style.left = `${x + 16}px`; // 调整位置使其居中
+                trail.style.bottom = `${y + 16}px`;
+                trail.style.backgroundColor = color;
+                
+                // 根据当前位置设置轨迹点大小，靠近终点的轨迹点更小
+                const containerWidth = container.clientWidth;
+                const progress = (x - 40) / (containerWidth - 80);
+                const size = 8 - progress * 4; // 从8px减小到4px
+                
+                trail.style.width = `${size}px`;
+                trail.style.height = `${size}px`;
+                trail.style.opacity = 0.7 - progress * 0.3; // 从0.7逐渐减小到0.4
+                
+                container.appendChild(trail);
+                
+                // 添加到轨迹数组
+                trailElements.push(trail);
+                
+                // 淡出效果
+                setTimeout(() => {
+                    trail.style.opacity = '0';
+                    setTimeout(() => {
+                        if (container.contains(trail)) {
+                            container.removeChild(trail);
+                        }
+                        trailElements = trailElements.filter(el => el !== trail);
+                    }, 500);
+                }, 2000);
+            }
+            
+            // 清除轨迹
+            function clearTrail() {
+                trailElements.forEach(trail => {
+                    if (trail.parentNode) {
+                        trail.parentNode.removeChild(trail);
+                    }
+                });
+                trailElements = [];
+            }
+            
+            // 导出动画按钮事件
+            exportBtn.addEventListener('click', () => {
+                exportPanel.classList.toggle('active');
+                if (exportPanel.classList.contains('active')) {
+                    exportStatus.textContent = '请选择导出设置并点击"捕获动画"';
+                }
+            });
+            
+            // 关闭导出面板
+            closeExportBtn.addEventListener('click', () => {
+                exportPanel.classList.remove('active');
+            });
+            
+            // 捕获按钮事件
+            captureBtn.addEventListener('click', () => {
+                // 检查是否已选择函数
+                const selectedFuncs = getSelectedFunctions();
+                if (selectedFuncs.length === 0) {
+                    exportStatus.textContent = '请先选择至少一个函数';
+                    return;
+                }
+                
+                // 获取选中的格式
+                const format = document.querySelector('input[name="format"]:checked').value;
+                
+                if (isAnimating) {
+                    exportStatus.textContent = '请等待当前动画完成';
+                    return;
+                }
+                
+                // 重置进度条
+                progressBar.classList.remove('active');
+                progressFill.style.width = '0%';
+                
+                captureMode = true;
+                exportStatus.textContent = `准备捕获为${format.toUpperCase()}格式`;
+                
+                // 触发动画
+                setTimeout(() => animateBtn.click(), 100);
+            });
+            
+            // 坐标模式切换
+            coordinateMode.addEventListener('change', () => {
+                if (coordinateMode.value === 'custom') {
+                    customCoordinates.style.display = 'block';
+                } else {
+                    customCoordinates.style.display = 'none';
+                }
+                drawGraph(); // 重新绘制以应用新的坐标范围
+            });
+
+            // 自定义坐标输入
+            startX.addEventListener('input', drawGraph);
+            startY.addEventListener('input', drawGraph);
+            endX.addEventListener('input', drawGraph);
+            endY.addEventListener('input', drawGraph);
+            
+            // 轨迹显示开关
+            showTrailCheckbox.addEventListener('change', () => {
+                if (!showTrailCheckbox.checked) {
+                    clearTrail();
+                }
+            });
+            
+            // 初始渲染
+            window.addEventListener('resize', drawGraph);
+            renderFunctionSelector();
+            drawGraph();
+        });
+    </script>
+</body>
+</html>

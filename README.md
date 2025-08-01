@@ -1,6 +1,6 @@
 # Open PhiEdit (Fork)
 
-这是 [@cbs001](https://github.com/cbs001) 的 [open-phiedit](https://github.com/cbs001/open-phiedit) 项目的FORK，看个乐就行了，尝试加了点UI和反馈（很喜欢ae的ui，很想做成AE的UI但是不会），内核没动
+这是 [@cbs001](https://github.com/cbs001) 的 [open-phiedit](https://github.com/cbs001/open-phiedit) 项目的FORK，代码是gpt改的 看个乐就行了，尝试加了点UI和反馈（很喜欢ae的ui，很想做成AE的UI但是不会），内核没动 想了解贝塞尔的实现 有人推荐些相关的内容吗
 # Open PhiEdit fork
 
 > 🌟 如果你喜欢这个项目，别忘了给原作者的 [open-phiedit](https://github.com/cbs001/open-phiedit) 点个Star！
